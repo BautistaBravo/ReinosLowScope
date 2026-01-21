@@ -1,0 +1,38 @@
+{
+    "slime": {
+        "name": "Slime",
+        "hp": 20,
+        "max_hp": 20,
+        "damage": 2,
+        "speed": 10.0,
+        "xp_reward": 10,
+        "ai_type": "random"
+    },
+    "goblin": {
+        "name": "Goblin",
+        "hp": 40,
+        "max_hp": 40,
+        "damage": 5,
+        "speed": 15.0,
+        "xp_reward": 25,
+        "ai_type": "focus_weak"
+    },
+    "orc": {
+        "name": "Orc",
+        "hp": 80,
+        "max_hp": 80,
+        "damage": 10,
+        "speed": 8.0,
+        "xp_reward": 50,
+        "ai_type": "aggressive"
+    },
+    "dragon": {
+        "name": "Dragon",
+        "hp": 200,
+        "max_hp": 200,
+        "damage": 20,
+        "speed": 12.0,
+        "xp_reward": 500,
+        "ai_type": "boss"
+    }
+}

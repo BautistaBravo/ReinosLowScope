@@ -11,7 +11,6 @@ var input_buffer = []
 var selected_enemy_index = -1
 var enemies_data = [] # Local copy of enemy data for the battle
 var enemy_atb_gauges = [] # Array of floats (0 to 100)
-var enemy_speeds = [] # How fast they charge
 var is_combat_active = true
 
 # UI References
@@ -100,7 +99,6 @@ func _refresh_party_ui():
 		hp_bar.max_value = member["max_hp"]
 		hp_bar.value = member["hp"]
 		hp_bar.custom_minimum_size = Vector2(100, 10)
-		# Green style for HP could be added but using default for now
 		vbox.add_child(hp_bar)
 
 		var hp_text = Label.new()
@@ -110,10 +108,8 @@ func _refresh_party_ui():
 func _load_enemies():
 	enemies_data = GameManager.get_level_data(GameManager.selected_level)
 	enemy_atb_gauges = []
-	enemy_speeds = []
 	for e in enemies_data:
 		enemy_atb_gauges.append(0.0)
-		enemy_speeds.append(randf_range(10.0, 20.0)) # Random speed
 
 	_refresh_enemy_ui()
 
@@ -124,7 +120,7 @@ func _refresh_enemy_ui():
 	for i in range(enemies_data.size()):
 		var enemy = enemies_data[i]
 		if enemy["hp"] <= 0:
-			continue # Don't show dead enemies
+			continue
 
 		var btn = Button.new()
 		btn.toggle_mode = true
@@ -136,7 +132,7 @@ func _refresh_enemy_ui():
 
 func _on_enemy_selected(index):
 	selected_enemy_index = index
-	_refresh_enemy_ui() # To update selection visual state
+	_refresh_enemy_ui()
 
 func _process(delta):
 	if not is_combat_active:
@@ -149,24 +145,45 @@ func _process(delta):
 	# Process Enemies
 	for i in range(enemies_data.size()):
 		if enemies_data[i]["hp"] > 0:
-			enemy_atb_gauges[i] += enemy_speeds[i] * delta
+			var speed = enemies_data[i].get("speed", 10.0)
+			enemy_atb_gauges[i] += speed * delta
 			if enemy_atb_gauges[i] >= 100.0:
 				enemy_atb_gauges[i] = 0.0
 				_enemy_attack(i)
 
 func _enemy_attack(enemy_idx):
-	# Attack random alive party member
+	var ai_type = enemies_data[enemy_idx].get("ai_type", "random")
+	var target_idx = -1
+
 	var alive_indices = []
 	for i in range(GameManager.party.size()):
 		if GameManager.party[i]["hp"] > 0:
 			alive_indices.append(i)
 
-	if alive_indices.size() > 0:
-		var target_idx = alive_indices.pick_random()
-		var dmg = 2 # Fixed damage for now
-		if "damage" in enemies_data[enemy_idx]:
-			dmg = enemies_data[enemy_idx]["damage"]
+	if alive_indices.size() == 0:
+		return # No one to attack
 
+	# AI Logic
+	if ai_type == "focus_weak":
+		var lowest_hp = 9999
+		for i in alive_indices:
+			if GameManager.party[i]["hp"] < lowest_hp:
+				lowest_hp = GameManager.party[i]["hp"]
+				target_idx = i
+	elif ai_type == "aggressive":
+		# Attack random, but maybe could imply higher damage logic elsewhere.
+		# For now, same as random but we could prioritize highest HP to whittle down?
+		# Let's say Aggressive attacks highest HP.
+		var highest_hp = -1
+		for i in alive_indices:
+			if GameManager.party[i]["hp"] > highest_hp:
+				highest_hp = GameManager.party[i]["hp"]
+				target_idx = i
+	else: # random
+		target_idx = alive_indices.pick_random()
+
+	if target_idx != -1:
+		var dmg = enemies_data[enemy_idx].get("damage", 2)
 		GameManager.damage_party_member(target_idx, dmg)
 		log_label.text = enemies_data[enemy_idx]["name"] + " hits " + GameManager.party[target_idx]["name"] + " for " + str(dmg)
 		_refresh_party_ui()
