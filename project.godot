@@ -1,0 +1,16 @@
+config_version=5
+
+[application]
+
+config/name="LowScopeRPG"
+run/main_scene="res://scenes/MainMenu.tscn"
+config/features=PackedStringArray("4.2", "Forward Plus")
+
+[autoload]
+
+GameManager="*res://scripts/globals/GameManager.gd"
+
+[display]
+
+window/size/viewport_width=1152
+window/size/viewport_height=648
