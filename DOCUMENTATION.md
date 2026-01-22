@@ -47,18 +47,20 @@ El juego carga configuración desde archivos JSON en `res://data/`.
 
 ## 4. Escena: Combat
 **Archivo:** `scripts/scenes/Combat.gd`
-**Descripción:** Sistema de combate ATB con combos y estadísticas dinámicas.
+**Descripción:** Sistema de combate ATB con combos, estadísticas dinámicas y compañeros controlados por IA.
 
 ### Mecánicas
+*   **Player (Hero 1):** Controlado por el usuario.
+    *   **Input:** Combos Q/W/E (Heal, Damage, Heavy Damage).
+    *   **Stamina:** Barra superior grande. Se consume al presionar teclas.
+*   **Compañeros (AI):**
+    *   **Stamina:** Barras independientes debajo de cada héroe. Regeneran automáticamente.
+    *   **IA:** Cuando la stamina llega a 30, ejecutan una acción automáticamente.
+        *   **Heal:** 30% de probabilidad si algún aliado tiene < 50% HP.
+        *   **Attack:** Ataca a un enemigo aleatorio con su daño base + equipo.
 *   **Stats Dinámicos:**
-    *   **Max Stamina:** Base (100) + Suma de bonus de stamina de todo el equipamiento.
-    *   **Stamina Regen:** Base (1.0) + Suma de bonus de regen de todo el equipamiento.
-    *   **Daño:** Base del combo + Suma de daño de armas equipadas.
-    *   **HP:** Los personajes tienen HP actual y Max HP efectivo (Base + Armadura).
-*   **Combos:** Input de 3 teclas (Q, W, E).
-    *   Q: Daño.
-    *   W: Curación.
-    *   E: Daño fuerte.
+    *   **Max Stamina y Regen:** Individual para cada miembro, basado en su equipo.
+    *   **Daño:** El daño del Player usa solo sus stats. El daño de la IA usa sus propios stats.
 *   **IA Enemiga:**
     *   `random`: Aleatorio.
     *   `focus_weak`: Ataca al más débil.
