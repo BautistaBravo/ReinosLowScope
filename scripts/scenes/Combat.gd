@@ -2,9 +2,7 @@ extends Control
 
 # Constants
 const BASE_STAMINA_COST = 5
-const BASE_STAMINA_REGEN = 1.0
-const BASE_MAX_STAMINA = 100.0
-const AI_ACTION_COST = 30.0 # Stamina required for AI companion to act
+const AI_ACTION_COST = 30.0
 
 # State
 var is_combat_active = true
@@ -16,8 +14,6 @@ var player_stamina_regen = 1.0
 var input_buffer = []
 
 # Party State (AI)
-# Array of floats tracking stamina for each member.
-# Index 0 is player_stamina (synced), Indices > 0 are AI.
 var party_stamina = []
 var party_max_stamina = []
 var party_stamina_regen = []
@@ -27,7 +23,7 @@ var enemies_data = []
 var enemy_atb_gauges = []
 
 # UI References
-var stamina_bar: ProgressBar # Player's big stamina bar
+var stamina_bar: ProgressBar
 var input_label: Label
 var log_label: Label
 var party_container: VBoxContainer
@@ -53,11 +49,23 @@ func _calculate_party_stats():
 	party_stamina_regen = []
 
 	for i in range(GameManager.party.size()):
-		var bonus_stam = GameManager.get_member_effective_stat(i, "stamina", 0)
-		var bonus_regen = GameManager.get_member_effective_stat(i, "stamina_regen", 0)
+		var member = GameManager.party[i]
+		# Use member's base stats + equipment bonus
+		var base_stam = member.get("base_stamina", 100)
+		var base_regen = member.get("base_stamina_regen", 1.0)
 
-		party_max_stamina.append(BASE_MAX_STAMINA + bonus_stam)
-		party_stamina_regen.append(BASE_STAMINA_REGEN + bonus_regen)
+		# get_member_effective_stat adds equipment stats to a given base value
+		# Note: get_member_effective_stat logic in GameManager handles summing bonus.
+		# But here we pass 0 as base because we want ONLY the bonus,
+		# OR we pass base_stam and let it add?
+		# Looking at GameManager: `val = base_value ... val += stats[name]`.
+		# So we pass base_stam.
+
+		var total_stam = GameManager.get_member_effective_stat(i, "stamina", base_stam)
+		var total_regen = GameManager.get_member_effective_stat(i, "stamina_regen", base_regen)
+
+		party_max_stamina.append(total_stam)
+		party_stamina_regen.append(total_regen)
 
 	# Player alias
 	player_max_stamina = party_max_stamina[0]
@@ -119,8 +127,8 @@ func _refresh_party_ui():
 		panel.add_child(vbox)
 
 		# Stats
-		var bonus_hp = GameManager.get_member_effective_stat(i, "hp", 0)
-		var total_max_hp = member["max_hp"] + bonus_hp
+		var bonus_hp = GameManager.get_member_effective_stat(i, "hp", 0) # Only bonus
+		var total_max_hp = member["max_hp"] + bonus_hp # max_hp in member is base from growth
 
 		var name_lbl = Label.new()
 		name_lbl.text = member["name"] + " (Lvl " + str(member["level"]) + ")"
@@ -137,7 +145,7 @@ func _refresh_party_ui():
 		hp_text.text = str(member["hp"]) + "/" + str(total_max_hp)
 		vbox.add_child(hp_text)
 
-		# Stamina Bar (for everyone, so we can see AI status)
+		# Stamina Bar
 		var s_lbl = Label.new()
 		s_lbl.text = "Stamina"
 		s_lbl.add_theme_font_size_override("font_size", 10)
@@ -147,7 +155,6 @@ func _refresh_party_ui():
 		s_bar.max_value = party_max_stamina[i]
 		s_bar.value = party_stamina[i]
 		s_bar.custom_minimum_size = Vector2(100, 8)
-		# Distinguish Player vs AI visually if desired, but default is fine
 		vbox.add_child(s_bar)
 
 func _load_enemies():
@@ -188,20 +195,12 @@ func _process(delta):
 		if GameManager.party[i]["hp"] > 0:
 			party_stamina[i] = min(party_stamina[i] + party_stamina_regen[i] * delta, party_max_stamina[i])
 
-			# AI Logic (Indices > 0)
 			if i > 0 and party_stamina[i] >= AI_ACTION_COST:
 				_ai_companion_act(i)
 
-	# Sync player var for UI ease
 	player_stamina = party_stamina[0]
 	stamina_bar.value = player_stamina
 
-	# Refresh UI bars occasionally or every frame?
-	# Rebuilding UI every frame is expensive. Let's update values if possible.
-	# But _refresh_party_ui rebuilds nodes. Better to just update value property if we had references.
-	# For prototype, rebuilding is fast enough, but causes flicker/input issues if we had buttons there.
-	# Since it's passive bars, we can optimize or just leave it.
-	# Given the structure, let's optimize slightly: update specific children.
 	_update_party_bars_only()
 
 	# Process Enemies
@@ -214,34 +213,30 @@ func _process(delta):
 				_enemy_attack(i)
 
 func _update_party_bars_only():
-	# Iterate existing containers and update values
 	var children = party_container.get_children()
 	for i in range(children.size()):
 		if i >= party_stamina.size(): break
 		var panel = children[i]
 		var vbox = panel.get_child(0)
-		# VBox Structure: Name(0), HPBar(1), HPText(2), StamLbl(3), StamBar(4)
 		if vbox.get_child_count() >= 5:
 			var hp_bar = vbox.get_child(1)
 			var hp_text = vbox.get_child(2)
 			var s_bar = vbox.get_child(4)
 
-			# HP Update
 			var member = GameManager.party[i]
 			var bonus_hp = GameManager.get_member_effective_stat(i, "hp", 0)
 			var max_hp = member["max_hp"] + bonus_hp
+
 			hp_bar.max_value = max_hp
 			hp_bar.value = member["hp"]
 			hp_text.text = str(member["hp"]) + "/" + str(max_hp)
 
-			# Stam Update
 			s_bar.max_value = party_max_stamina[i]
 			s_bar.value = party_stamina[i]
 
 func _ai_companion_act(member_idx):
 	party_stamina[member_idx] -= AI_ACTION_COST
 
-	# Simple AI: 30% chance heal if anyone low, else Attack random
 	var needs_heal = false
 	for m in GameManager.party:
 		if m["hp"] > 0 and m["hp"] < (m["max_hp"] * 0.5):
@@ -253,15 +248,15 @@ func _ai_companion_act(member_idx):
 		action = "heal"
 
 	if action == "heal":
-		var heal_amt = 5 # Fixed low heal
+		var heal_amt = 5
 		GameManager.heal_party(heal_amt)
 		log_label.text = GameManager.party[member_idx]["name"] + " heals party for " + str(heal_amt)
 	else:
 		# Attack
-		var dmg_bonus = GameManager.get_member_effective_stat(member_idx, "damage", 0)
-		var dmg = 2 + dmg_bonus # Base 2 + Bonus
+		# Use member base damage + equipment bonus
+		var base_dmg = GameManager.party[member_idx].get("base_damage", 2)
+		var total_dmg = GameManager.get_member_effective_stat(member_idx, "damage", base_dmg)
 
-		# Find target
 		var targets = []
 		for e_idx in range(enemies_data.size()):
 			if enemies_data[e_idx]["hp"] > 0:
@@ -269,9 +264,9 @@ func _ai_companion_act(member_idx):
 
 		if targets.size() > 0:
 			var t = targets.pick_random()
-			enemies_data[t]["hp"] -= dmg
-			log_label.text = GameManager.party[member_idx]["name"] + " hits " + enemies_data[t]["name"] + " for " + str(dmg)
-			_refresh_enemy_ui() # Update enemy HP visuals
+			enemies_data[t]["hp"] -= total_dmg
+			log_label.text = GameManager.party[member_idx]["name"] + " hits " + enemies_data[t]["name"] + " for " + str(total_dmg)
+			_refresh_enemy_ui()
 			_check_win_condition()
 
 func _enemy_attack(enemy_idx):
@@ -305,7 +300,6 @@ func _enemy_attack(enemy_idx):
 		var dmg = enemies_data[enemy_idx].get("damage", 2)
 		GameManager.damage_party_member(target_idx, dmg)
 		log_label.text = enemies_data[enemy_idx]["name"] + " hits " + GameManager.party[target_idx]["name"] + " for " + str(dmg)
-		# HP visuals update in _process via _update_party_bars_only
 		_check_loss_condition()
 
 func _input(event):
@@ -322,7 +316,6 @@ func _input(event):
 			key = "E"
 
 		if key != "":
-			# Use Player Stamina (Index 0)
 			if party_stamina[0] >= BASE_STAMINA_COST:
 				party_stamina[0] -= BASE_STAMINA_COST
 				input_buffer.append(key)
@@ -353,13 +346,24 @@ func _execute_combo():
 		log_text += "Heal party " + str(heal_base) + ". "
 
 	# Damage
-	# Only Player Equipment Bonus
-	var dmg_bonus = GameManager.get_member_effective_stat(0, "damage", 0)
+	# Player Base Damage + Bonus
+	var base_dmg_stat = GameManager.party[0].get("base_damage", 2)
+	var dmg_bonus = GameManager.get_member_effective_stat(0, "damage", base_dmg_stat) # Total Damage Stat
 
-	var base_dmg = (q * 1) + (e * 2)
-	var total_dmg = base_dmg + dmg_bonus
+	# But wait, logic was: (q*1 + e*2) + bonus.
+	# Now we have a 'base_damage' stat. Should that replace the (1 or 2)?
+	# The prompt says: "diccionario de crecimiento... hp, attack...".
+	# So 'attack' (base_damage) should probably scale the damage.
+	# Let's interpret: Damage = (Combo Multiplier * Attack Stat).
+	# Q = 1x Attack, E = 2x Attack?
+	# Previous logic: (q*1) + (e*2) + bonus.
+	# New Logic suggestion: (q * 1 * Attack) + (e * 2 * Attack)? Or just Attack + Combo?
+	# Let's keep it additive to be safe with low numbers: (q*1 + e*2) + TotalAttackStat.
 
-	if base_dmg > 0:
+	var combo_dmg = (q * 1) + (e * 2)
+	var total_dmg = combo_dmg + dmg_bonus
+
+	if combo_dmg > 0:
 		if selected_enemy_index != -1 and selected_enemy_index < enemies_data.size() and enemies_data[selected_enemy_index]["hp"] > 0:
 			enemies_data[selected_enemy_index]["hp"] -= total_dmg
 			log_text += "Hit enemy for " + str(total_dmg) + "."
