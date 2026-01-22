@@ -3,6 +3,7 @@ extends Control
 # Constants
 const BASE_STAMINA_COST = 5
 const AI_ACTION_COST = 30.0
+const INPUT_COOLDOWN = 0.5
 
 # State
 var is_combat_active = true
@@ -13,6 +14,7 @@ var player_stamina = 100.0
 var player_max_stamina = 100.0
 var player_stamina_regen = 1.0
 var input_buffer = []
+var input_cooldown_timer = 0.0
 
 # Party State (AI)
 var party_stamina = []
@@ -41,6 +43,7 @@ func _ready():
 	player_stamina = party_stamina[0]
 	input_buffer = []
 	is_targeting_mode = false
+	input_cooldown_timer = 0.0
 
 	_build_ui()
 	_load_party()
@@ -192,6 +195,10 @@ func _process(delta):
 	if not is_combat_active:
 		return
 
+	# Input Cooldown
+	if input_cooldown_timer > 0:
+		input_cooldown_timer -= delta
+
 	# Regen Party Stamina
 	for i in range(party_stamina.size()):
 		if GameManager.party[i]["hp"] > 0:
@@ -342,13 +349,17 @@ func _input(event):
 				# Ignore combo inputs while waiting for target
 				return
 
+			# Check Cooldown
+			if input_cooldown_timer > 0:
+				return # Ignore input if cooldown is active
+
 			if party_stamina[0] >= BASE_STAMINA_COST:
 				party_stamina[0] -= BASE_STAMINA_COST
 				input_buffer.append(key)
+				input_cooldown_timer = INPUT_COOLDOWN # Set cooldown
 				_update_input_label()
 
 				if input_buffer.size() >= 3:
-					# _execute_combo() -> REMOVED
 					# Trigger Target Selection Mode
 					is_targeting_mode = true
 					input_feedback.text = "Combo Ready! CLICK A TARGET!"
