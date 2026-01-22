@@ -10,14 +10,14 @@
         "ai_type": "random"
     },
     "goblin": {
-        "name": "Goblin",
+        "name": "Twin Goblin",
         "hp": 40,
         "max_hp": 40,
         "damage": 5,
         "speed": 15.0,
         "xp_reward": 25,
         "gold_reward": 15,
-        "ai_type": "focus_weak"
+        "ai_type": "twin_attack"
     },
     "orc": {
         "name": "Orc",

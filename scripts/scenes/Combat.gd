@@ -292,6 +292,19 @@ func _enemy_attack(enemy_idx):
 			if GameManager.party[i]["hp"] > highest_hp:
 				highest_hp = GameManager.party[i]["hp"]
 				target_idx = i
+	elif ai_type == "twin_attack":
+		var next_same = enemies_data[enemy_idx].get("twin_next_is_same", false)
+		var last_target = enemies_data[enemy_idx].get("twin_last_target", -1)
+
+		if next_same and last_target != -1 and GameManager.party[last_target]["hp"] > 0:
+			# Target exists and is alive
+			target_idx = last_target
+			enemies_data[enemy_idx]["twin_next_is_same"] = false
+		else:
+			# Random
+			target_idx = alive_indices.pick_random()
+			enemies_data[enemy_idx]["twin_last_target"] = target_idx
+			enemies_data[enemy_idx]["twin_next_is_same"] = true
 	else:
 		target_idx = alive_indices.pick_random()
 

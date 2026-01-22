@@ -60,3 +60,8 @@ El juego carga configuración desde archivos JSON en `res://data/`.
 *   **Compañeros (AI):** Actúan automáticamente (Curar/Atacar) cuando su Stamina llega a 30.
 *   **Stats Dinámicos:** HP, Daño y Stamina calculados en base a Nivel y Equipo.
 *   **Recompensas:** Al ganar, se entrega XP y Oro basado en enemigos derrotados.
+*   **IA Enemiga:**
+    *   `random`: Aleatorio.
+    *   `focus_weak`: Ataca al más débil.
+    *   `aggressive`: Ataca al más fuerte.
+    *   `twin_attack`: Patrón alternado (Aleatorio -> Repetir Mismo Objetivo -> Aleatorio...).
