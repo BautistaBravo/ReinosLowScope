@@ -499,11 +499,11 @@ func _execute_combo():
 			log_text += "Hit enemy for " + str(total_dmg) + "."
 
 			# Apply Debuffs based on input
-			if q > 0:
+			if q > 1:
 				# Q Apply Bleed
 				apply_debuff(false, selected_enemy_index, "bleed", 4.0)
 				log_text += " Applied Bleed."
-			if e > 0:
+			if e > 2:
 				# E Apply Slowed
 				apply_debuff(false, selected_enemy_index, "slowed", 5.0)
 				log_text += " Applied Slowed."
