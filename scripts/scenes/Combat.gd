@@ -3,7 +3,7 @@ extends Control
 # Constants
 const BASE_STAMINA_COST = 5
 const AI_ACTION_COST = 30.0
-const INPUT_COOLDOWN = 0.3
+const INPUT_COOLDOWN = 0.5
 
 # State
 var is_combat_active = true
@@ -25,7 +25,7 @@ var selected_enemy_index = -1
 var enemies_data = []
 var enemy_atb_gauges = []
 
-# Debuff State: Array of Arrays/Dictionaries
+# Debuff/Buff State: Array of Arrays/Dictionaries
 # party_debuffs[member_idx] = [ { "type": "slowed", "duration": 5.0 }, ... ]
 var party_debuffs = []
 var enemy_debuffs = []
@@ -162,7 +162,7 @@ func _load_enemies():
 	for e in enemies_data:
 		enemy_atb_gauges.append(0.0)
 		e["last_attacker"] = -1
-		enemy_debuffs.append([]) # Init debuff list for each enemy
+		enemy_debuffs.append([])
 
 	_refresh_enemy_ui()
 
@@ -180,7 +180,6 @@ func _refresh_enemy_ui():
 		btn.button_pressed = (i == selected_enemy_index)
 		btn.text = enemy["name"] + "\nHP: " + str(enemy["hp"])
 
-		# Show Debuffs
 		var debuff_text = ""
 		for d in enemy_debuffs[i]:
 			debuff_text += d["type"].left(1).to_upper() + " "
@@ -208,13 +207,10 @@ func _process(delta):
 	if input_cooldown_timer > 0:
 		input_cooldown_timer -= delta
 
-	# Process Debuffs
 	_process_debuffs(delta)
 
-	# Regen Party Stamina
 	for i in range(party_stamina.size()):
 		if GameManager.party[i]["hp"] > 0:
-			# Check Slowed (halves regen)
 			var multiplier = 1.0
 			for d in party_debuffs[i]:
 				if d["type"] == "slowed":
@@ -230,7 +226,6 @@ func _process(delta):
 
 	_update_party_bars_only()
 
-	# Process Enemies
 	for i in range(enemies_data.size()):
 		if enemies_data[i]["hp"] > 0:
 			var speed = enemies_data[i].get("speed", 10.0)
@@ -240,7 +235,6 @@ func _process(delta):
 				_enemy_attack(i)
 
 func _process_debuffs(delta):
-	# Update Party Debuffs
 	for i in range(party_debuffs.size()):
 		var active_list = []
 		for d in party_debuffs[i]:
@@ -259,7 +253,6 @@ func _process_debuffs(delta):
 				active_list.append(d)
 		party_debuffs[i] = active_list
 
-	# Update Enemy Debuffs
 	for i in range(enemy_debuffs.size()):
 		if enemies_data[i]["hp"] <= 0: continue
 		var active_list = []
@@ -291,7 +284,6 @@ func apply_debuff(is_party, index, type, duration):
 
 	if list_ref == null: return
 
-	# Check existing
 	var existing = null
 	for d in list_ref:
 		if d["type"] == type:
@@ -299,7 +291,7 @@ func apply_debuff(is_party, index, type, duration):
 			break
 
 	if existing:
-		existing["duration"] = duration # Refresh duration
+		existing["duration"] = duration
 		if type == "bleed":
 			existing["stacks"] += 1
 	else:
@@ -308,13 +300,10 @@ func apply_debuff(is_party, index, type, duration):
 			new_debuff["stacks"] = 1
 			new_debuff["tick_timer"] = 1.0
 
-		# Since list_ref is a reference to the array inside the array of arrays?
-		# In GDScript arrays are passed by reference.
-		# But `list_ref` is a local var holding the array. Modifying `list_ref` modifies the original array object.
 		list_ref.append(new_debuff)
 
 	if not is_party:
-		_refresh_enemy_ui() # Show debuff icon
+		_refresh_enemy_ui()
 
 func _update_party_bars_only():
 	var children = party_container.get_children()
@@ -356,7 +345,6 @@ func _ai_companion_act(member_idx):
 		GameManager.heal_party(heal_amt)
 		log_label.text = GameManager.party[member_idx]["name"] + " heals party for " + str(heal_amt)
 	else:
-		# Attack
 		var base_dmg = GameManager.party[member_idx].get("base_damage", 2)
 		var total_dmg = GameManager.get_member_effective_stat(member_idx, "damage", base_dmg)
 
@@ -422,8 +410,6 @@ func _enemy_attack(enemy_idx):
 		var dmg = enemies_data[enemy_idx].get("damage", 2)
 		GameManager.damage_party_member(target_idx, dmg)
 
-		# Example: Enemies could apply debuffs too?
-		# Applying Bleed chance for Skeleton
 		if enemies_data[enemy_idx]["name"] == "Skeleton":
 			if randf() < 0.5:
 				apply_debuff(true, target_idx, "bleed", 4.0)
@@ -478,11 +464,15 @@ func _execute_combo():
 
 	var log_text = "Player Combo: "
 
-	# Heal
+	# Heal (And Buff)
 	if w > 0:
 		var heal_base = w * 1
 		GameManager.heal_party(heal_base)
 		log_text += "Heal party " + str(heal_base) + ". "
+
+		# W also applies Attack Boost Buff (Positive effect)
+		apply_debuff(true, 0, "attack_boost", 10.0)
+		log_text += " Applied Attack Boost."
 
 	# Damage
 	var base_dmg_stat = GameManager.party[0].get("base_damage", 2)
@@ -491,6 +481,15 @@ func _execute_combo():
 	var combo_dmg = (q * 1) + (e * 2)
 	var total_dmg = combo_dmg + dmg_bonus
 
+	# Check Attack Boost Buff
+	# Iterate party_debuffs[0] (Player effects)
+	var dmg_multiplier = 1.0
+	for d in party_debuffs[0]:
+		if d["type"] == "attack_boost":
+			dmg_multiplier += 0.20 # +20%
+
+	total_dmg *= dmg_multiplier
+
 	if combo_dmg > 0:
 		if selected_enemy_index != -1 and selected_enemy_index < enemies_data.size() and enemies_data[selected_enemy_index]["hp"] > 0:
 			enemies_data[selected_enemy_index]["hp"] -= total_dmg
@@ -498,13 +497,10 @@ func _execute_combo():
 
 			log_text += "Hit enemy for " + str(total_dmg) + "."
 
-			# Apply Debuffs based on input
-			if q > 1:
-				# Q Apply Bleed
+			if q > 0:
 				apply_debuff(false, selected_enemy_index, "bleed", 4.0)
 				log_text += " Applied Bleed."
-			if e > 2:
-				# E Apply Slowed
+			if e > 0:
 				apply_debuff(false, selected_enemy_index, "slowed", 5.0)
 				log_text += " Applied Slowed."
 

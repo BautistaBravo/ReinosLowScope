@@ -57,9 +57,10 @@ El juego carga configuración desde archivos JSON en `res://data/`.
     1.  **Input Combo:** Introduce secuencia Q/W/E (3 teclas). Existe un **Cooldown de 0.5s** entre cada input.
     2.  **Targeting:** Una vez completada la secuencia, el juego espera a que el jugador **clickee un enemigo**.
     3.  **Ejecución:** Al clickear, se dispara el ataque (Daño/Cura) y se reinicia el combo.
-*   **Debuffs:**
-    *   **Bleed:** Stackeable. Pierde 1 HP por stack cada segundo. Duración 4s (se reinicia al stackear). Aplicado por inputs **Q** del jugador y ataques de esqueletos.
-    *   **Slowed:** No stackeable. Reduce la regeneración de stamina a la mitad. Duración 5s. Aplicado por inputs **E** del jugador.
+*   **Buffs y Debuffs:**
+    *   **Bleed (Debuff):** Stackeable. Pierde 1 HP por stack cada segundo. Duración 4s. Aplicado por inputs **Q**.
+    *   **Slowed (Debuff):** Reduce regeneración de stamina a la mitad. Duración 5s. Aplicado por inputs **E**.
+    *   **Attack Boost (Buff):** Aumenta el daño del jugador en un 20%. Duración 10s. Aplicado por inputs **W** (además de curar).
 *   **Compañeros (AI):** Actúan automáticamente (Curar/Atacar) cuando su Stamina llega a 30.
 *   **Stats Dinámicos:** HP, Daño y Stamina calculados en base a Nivel y Equipo.
 *   **Recompensas:** Al ganar, se entrega XP y Oro basado en enemigos derrotados.
