@@ -6,6 +6,7 @@ const AI_ACTION_COST = 30.0
 
 # State
 var is_combat_active = true
+var is_targeting_mode = false
 
 # Player State (Hero 1)
 var player_stamina = 100.0
@@ -39,6 +40,7 @@ func _ready():
 
 	player_stamina = party_stamina[0]
 	input_buffer = []
+	is_targeting_mode = false
 
 	_build_ui()
 	_load_party()
@@ -175,8 +177,14 @@ func _refresh_enemy_ui():
 		enemy_container.add_child(btn)
 
 func _on_enemy_selected(index):
-	selected_enemy_index = index
-	_refresh_enemy_ui()
+	if is_targeting_mode:
+		selected_enemy_index = index
+		_refresh_enemy_ui()
+		_execute_combo()
+		is_targeting_mode = false
+	else:
+		selected_enemy_index = index
+		_refresh_enemy_ui()
 
 func _process(delta):
 	if not is_combat_active:
@@ -307,21 +315,29 @@ func _input(event):
 			key = "E"
 
 		if key != "":
+			if is_targeting_mode:
+				# Ignore combo inputs while waiting for target
+				return
+
 			if party_stamina[0] >= BASE_STAMINA_COST:
 				party_stamina[0] -= BASE_STAMINA_COST
 				input_buffer.append(key)
 				_update_input_label()
 
 				if input_buffer.size() >= 3:
-					_execute_combo()
+					# _execute_combo() -> REMOVED
+					# Trigger Target Selection Mode
+					is_targeting_mode = true
+					input_feedback.text = "Combo Ready! CLICK A TARGET!"
 			else:
 				log_label.text = "Not enough stamina!"
 
 func _update_input_label():
-	var text = "Input: "
-	for k in input_buffer:
-		text += k + " "
-	input_feedback.text = text
+	if not is_targeting_mode:
+		var text = "Input: "
+		for k in input_buffer:
+			text += k + " "
+		input_feedback.text = text
 
 func _execute_combo():
 	var q = input_buffer.count("Q")

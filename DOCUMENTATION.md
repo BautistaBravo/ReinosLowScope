@@ -31,7 +31,7 @@ Este documento detalla la estructura de clases, funciones y comportamiento del s
 El juego carga configuración desde archivos JSON en `res://data/`.
 
 *   `items.json`: Define items, slots (weapon, helmet, chest, pants, boots), precio y estadísticas.
-*   `enemies.json`: Define atributos de enemigos (hp, daño, speed, **gold_reward**, **xp_reward**) y tipo de IA.
+*   `enemies.json`: Define atributos de enemigos (hp, daño, speed, gold_reward, xp_reward) y tipo de IA.
 *   `levels.json`: Define composición de enemigos por nivel.
 *   `growth.json`: Define estadísticas base por Nivel.
 
@@ -53,9 +53,10 @@ El juego carga configuración desde archivos JSON en `res://data/`.
 **Descripción:** Sistema de combate ATB con combos, estadísticas dinámicas y compañeros controlados por IA.
 
 ### Mecánicas
-*   **Player (Hero 1):** Controlado por el usuario. Input Q/W/E consume stamina del Player.
+*   **Player (Hero 1):** Controlado por el usuario.
+    1.  **Input Combo:** Introduce secuencia Q/W/E (3 teclas).
+    2.  **Targeting:** Una vez completada la secuencia, el juego espera a que el jugador **clickee un enemigo**.
+    3.  **Ejecución:** Al clickear, se dispara el ataque (Daño/Cura) y se reinicia el combo.
 *   **Compañeros (AI):** Actúan automáticamente (Curar/Atacar) cuando su Stamina llega a 30.
 *   **Stats Dinámicos:** HP, Daño y Stamina calculados en base a Nivel y Equipo.
-*   **Recompensas:**
-    *   Al ganar, se calcula el total de XP y **Oro** sumando los valores de los enemigos derrotados.
-    *   Se llama a `GameManager.gain_rewards(total_xp, total_gold)`.
+*   **Recompensas:** Al ganar, se entrega XP y Oro basado en enemigos derrotados.
