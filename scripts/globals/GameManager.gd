@@ -145,11 +145,11 @@ func damage_party_member(index, amount):
 		var member = party[index]
 		member["hp"] = max(0, member["hp"] - amount)
 
-func gain_party_xp(amount):
-	gold += amount
+func gain_rewards(xp_amount, gold_amount):
+	gold += gold_amount
 	for member in party:
 		if member["hp"] > 0:
-			member["xp"] += amount
+			member["xp"] += xp_amount
 			_check_level_up(member)
 
 func _check_level_up(member):

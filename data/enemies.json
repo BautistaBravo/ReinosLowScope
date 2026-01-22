@@ -6,6 +6,7 @@
         "damage": 2,
         "speed": 10.0,
         "xp_reward": 10,
+        "gold_reward": 5,
         "ai_type": "random"
     },
     "goblin": {
@@ -15,6 +16,7 @@
         "damage": 5,
         "speed": 15.0,
         "xp_reward": 25,
+        "gold_reward": 15,
         "ai_type": "focus_weak"
     },
     "orc": {
@@ -24,6 +26,7 @@
         "damage": 10,
         "speed": 8.0,
         "xp_reward": 50,
+        "gold_reward": 40,
         "ai_type": "aggressive"
     },
     "dragon": {
@@ -33,6 +36,7 @@
         "damage": 20,
         "speed": 12.0,
         "xp_reward": 500,
+        "gold_reward": 1000,
         "ai_type": "boss"
     }
 }

@@ -23,6 +23,7 @@ Este documento detalla la estructura de clases, funciones y comportamiento del s
 *   `buy_item(item_id)`: Resta oro y añade item al inventario si es posible.
 *   `equip_item(member_idx, item_id)`: Equipa un item a un personaje.
 *   `mark_level_complete(level_idx)`: Marca un nivel como completado y guarda el juego.
+*   `gain_rewards(xp_amount, gold_amount)`: Añade Oro globalmente y XP a cada miembro de la party, verificando Level Up.
 
 ---
 
@@ -30,7 +31,7 @@ Este documento detalla la estructura de clases, funciones y comportamiento del s
 El juego carga configuración desde archivos JSON en `res://data/`.
 
 *   `items.json`: Define items, slots (weapon, helmet, chest, pants, boots), precio y estadísticas.
-*   `enemies.json`: Define atributos de enemigos y tipo de IA.
+*   `enemies.json`: Define atributos de enemigos (hp, daño, speed, **gold_reward**, **xp_reward**) y tipo de IA.
 *   `levels.json`: Define composición de enemigos por nivel.
 *   `growth.json`: Define estadísticas base por Nivel.
 
@@ -55,4 +56,6 @@ El juego carga configuración desde archivos JSON en `res://data/`.
 *   **Player (Hero 1):** Controlado por el usuario. Input Q/W/E consume stamina del Player.
 *   **Compañeros (AI):** Actúan automáticamente (Curar/Atacar) cuando su Stamina llega a 30.
 *   **Stats Dinámicos:** HP, Daño y Stamina calculados en base a Nivel y Equipo.
-*   **Progresión:** Al ganar combate, se obtiene XP, se marca el nivel como completado y se guarda la partida.
+*   **Recompensas:**
+    *   Al ganar, se calcula el total de XP y **Oro** sumando los valores de los enemigos derrotados.
+    *   Se llama a `GameManager.gain_rewards(total_xp, total_gold)`.

@@ -359,17 +359,19 @@ func _execute_combo():
 func _check_win_condition():
 	var all_dead = true
 	var total_xp = 0
+	var total_gold = 0
+
 	for e in enemies_data:
 		if e["hp"] > 0:
 			all_dead = false
 		else:
 			total_xp += e.get("xp_reward", 10)
+			total_gold += e.get("gold_reward", 5)
 
 	if all_dead:
 		is_combat_active = false
-		log_label.text = "Victory! gained " + str(total_xp) + " XP."
-		GameManager.gain_party_xp(total_xp)
-		# Track completion
+		log_label.text = "Victory! gained " + str(total_xp) + " XP and " + str(total_gold) + " Gold."
+		GameManager.gain_rewards(total_xp, total_gold)
 		GameManager.mark_level_complete(GameManager.selected_level)
 
 		await get_tree().create_timer(2.0).timeout
