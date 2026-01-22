@@ -3,7 +3,7 @@ extends Control
 # Constants
 const BASE_STAMINA_COST = 5
 const AI_ACTION_COST = 30.0
-const INPUT_COOLDOWN = 0.5
+const INPUT_COOLDOWN = 0.3
 
 # State
 var is_combat_active = true
