@@ -156,6 +156,8 @@ func _load_enemies():
 	enemy_atb_gauges = []
 	for e in enemies_data:
 		enemy_atb_gauges.append(0.0)
+		# Init last_attacker tracking
+		e["last_attacker"] = -1
 
 	_refresh_enemy_ui()
 
@@ -264,6 +266,10 @@ func _ai_companion_act(member_idx):
 		if targets.size() > 0:
 			var t = targets.pick_random()
 			enemies_data[t]["hp"] -= total_dmg
+
+			# Record Last Attacker
+			enemies_data[t]["last_attacker"] = member_idx
+
 			log_label.text = GameManager.party[member_idx]["name"] + " hits " + enemies_data[t]["name"] + " for " + str(total_dmg)
 			_refresh_enemy_ui()
 			_check_win_condition()
@@ -297,14 +303,18 @@ func _enemy_attack(enemy_idx):
 		var last_target = enemies_data[enemy_idx].get("twin_last_target", -1)
 
 		if next_same and last_target != -1 and GameManager.party[last_target]["hp"] > 0:
-			# Target exists and is alive
 			target_idx = last_target
 			enemies_data[enemy_idx]["twin_next_is_same"] = false
 		else:
-			# Random
 			target_idx = alive_indices.pick_random()
 			enemies_data[enemy_idx]["twin_last_target"] = target_idx
 			enemies_data[enemy_idx]["twin_next_is_same"] = true
+	elif ai_type == "last_attacker":
+		var attacker_idx = enemies_data[enemy_idx].get("last_attacker", -1)
+		if attacker_idx != -1 and GameManager.party[attacker_idx]["hp"] > 0:
+			target_idx = attacker_idx
+		else:
+			target_idx = alive_indices.pick_random()
 	else:
 		target_idx = alive_indices.pick_random()
 
@@ -375,6 +385,10 @@ func _execute_combo():
 	if combo_dmg > 0:
 		if selected_enemy_index != -1 and selected_enemy_index < enemies_data.size() and enemies_data[selected_enemy_index]["hp"] > 0:
 			enemies_data[selected_enemy_index]["hp"] -= total_dmg
+
+			# Record Last Attacker (Player = 0)
+			enemies_data[selected_enemy_index]["last_attacker"] = 0
+
 			log_text += "Hit enemy for " + str(total_dmg) + "."
 			_refresh_enemy_ui()
 			_check_win_condition()

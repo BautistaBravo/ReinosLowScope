@@ -65,3 +65,4 @@ El juego carga configuración desde archivos JSON en `res://data/`.
     *   `focus_weak`: Ataca al más débil.
     *   `aggressive`: Ataca al más fuerte.
     *   `twin_attack`: Patrón alternado (Aleatorio -> Repetir Mismo Objetivo -> Aleatorio...).
+    *   `last_attacker`: Ataca al personaje que lo atacó por última vez (o Random si nadie lo atacó).

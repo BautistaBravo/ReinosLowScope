@@ -1,7 +1,7 @@
 {
     "1": ["slime", "slime"],
     "2": ["slime", "goblin"],
-    "3": ["goblin", "goblin", "slime"],
+    "3": ["skeleton", "slime"],
     "4": ["orc", "goblin"],
     "5": ["dragon"]
 }
