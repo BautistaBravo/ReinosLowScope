@@ -1,12 +1,15 @@
 extends Control
 
 # Constants
-const STAMINA_COST = 5
-const STAMINA_REGEN = 1.0 # per second
-const MAX_STAMINA = 100.0
+const BASE_STAMINA_COST = 5
+const BASE_STAMINA_REGEN = 1.0
+const BASE_MAX_STAMINA = 100.0
 
 # State
-var current_stamina = MAX_STAMINA
+var current_stamina = 100.0
+var max_stamina = 100.0
+var stamina_regen = 1.0
+
 var input_buffer = []
 var selected_enemy_index = -1
 var enemies_data = [] # Local copy of enemy data for the battle
@@ -22,12 +25,21 @@ var enemy_container: VBoxContainer
 var input_feedback: Label
 
 func _ready():
+	_calculate_party_stats()
+	current_stamina = max_stamina
+	input_buffer = []
+
 	_build_ui()
 	_load_party()
 	_load_enemies()
 
-	current_stamina = MAX_STAMINA
-	input_buffer = []
+func _calculate_party_stats():
+	# Calculate global stamina stats based on equipment
+	var bonus_stam = GameManager.get_party_total_stat_bonus("stamina")
+	var bonus_regen = GameManager.get_party_total_stat_bonus("stamina_regen")
+
+	max_stamina = BASE_MAX_STAMINA + bonus_stam
+	stamina_regen = BASE_STAMINA_REGEN + bonus_regen
 
 func _build_ui():
 	# Root VBox
@@ -44,7 +56,7 @@ func _build_ui():
 	top_bar.add_child(stam_label)
 
 	stamina_bar = ProgressBar.new()
-	stamina_bar.max_value = MAX_STAMINA
+	stamina_bar.max_value = max_stamina
 	stamina_bar.custom_minimum_size = Vector2(200, 20)
 	top_bar.add_child(stamina_bar)
 
@@ -91,18 +103,22 @@ func _refresh_party_ui():
 		var vbox = VBoxContainer.new()
 		panel.add_child(vbox)
 
+		# Calc Stats
+		var bonus_hp = GameManager.get_member_effective_stat(i, "hp", 0)
+		var total_max_hp = member["max_hp"] + bonus_hp
+
 		var name_lbl = Label.new()
 		name_lbl.text = member["name"] + " (Lvl " + str(member["level"]) + ")"
 		vbox.add_child(name_lbl)
 
 		var hp_bar = ProgressBar.new()
-		hp_bar.max_value = member["max_hp"]
+		hp_bar.max_value = total_max_hp
 		hp_bar.value = member["hp"]
 		hp_bar.custom_minimum_size = Vector2(100, 10)
 		vbox.add_child(hp_bar)
 
 		var hp_text = Label.new()
-		hp_text.text = str(member["hp"]) + "/" + str(member["max_hp"])
+		hp_text.text = str(member["hp"]) + "/" + str(total_max_hp)
 		vbox.add_child(hp_text)
 
 func _load_enemies():
@@ -139,7 +155,7 @@ func _process(delta):
 		return
 
 	# Regen Player Stamina
-	current_stamina = min(current_stamina + STAMINA_REGEN * delta, MAX_STAMINA)
+	current_stamina = min(current_stamina + stamina_regen * delta, max_stamina)
 	stamina_bar.value = current_stamina
 
 	# Process Enemies
@@ -171,9 +187,6 @@ func _enemy_attack(enemy_idx):
 				lowest_hp = GameManager.party[i]["hp"]
 				target_idx = i
 	elif ai_type == "aggressive":
-		# Attack random, but maybe could imply higher damage logic elsewhere.
-		# For now, same as random but we could prioritize highest HP to whittle down?
-		# Let's say Aggressive attacks highest HP.
 		var highest_hp = -1
 		for i in alive_indices:
 			if GameManager.party[i]["hp"] > highest_hp:
@@ -203,8 +216,8 @@ func _input(event):
 			key = "E"
 
 		if key != "":
-			if current_stamina >= STAMINA_COST:
-				current_stamina -= STAMINA_COST
+			if current_stamina >= BASE_STAMINA_COST:
+				current_stamina -= BASE_STAMINA_COST
 				input_buffer.append(key)
 				_update_input_label()
 
@@ -228,18 +241,29 @@ func _execute_combo():
 
 	# Heal
 	if w > 0:
-		var heal = w * 1
-		GameManager.heal_party(heal)
-		log_text += "Heal party " + str(heal) + ". "
+		var heal_base = w * 1
+		# Maybe equip affects healing? Assuming not for now, or maybe "damage" stat affects it?
+		# Let's say damage stat affects healing too for simplicity? Or just kept base.
+		# Prompt says: "Curando 1 punto... haciendo 1 punto de daño...". Doesn't specify stats affect healing.
+		# I will stick to base healing.
+		GameManager.heal_party(heal_base)
+		log_text += "Heal party " + str(heal_base) + ". "
 		_refresh_party_ui()
 
 	# Damage
-	var dmg = (q * 1) + (e * 2)
-	if dmg > 0:
+	# Calculate total damage bonus from party equipment
+	var total_dmg_bonus = GameManager.get_party_total_stat_bonus("damage")
+	# Does "damage extra" apply to every hit? Or just total combo?
+	# Let's apply it to total combo damage.
+
+	var base_dmg = (q * 1) + (e * 2)
+	var total_dmg = base_dmg + total_dmg_bonus
+
+	if base_dmg > 0:
 		# Check target
 		if selected_enemy_index != -1 and selected_enemy_index < enemies_data.size() and enemies_data[selected_enemy_index]["hp"] > 0:
-			enemies_data[selected_enemy_index]["hp"] -= dmg
-			log_text += "Hit enemy for " + str(dmg) + "."
+			enemies_data[selected_enemy_index]["hp"] -= total_dmg
+			log_text += "Hit enemy for " + str(total_dmg) + " (Base " + str(base_dmg) + " + Bonus " + str(total_dmg_bonus) + ")."
 			_refresh_enemy_ui()
 			_check_win_condition()
 		else:
