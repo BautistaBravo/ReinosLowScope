@@ -6,9 +6,9 @@ var gold_label: Label
 var inventory_list_container: VBoxContainer
 var equipment_grid: GridContainer
 var shop_list_container: VBoxContainer
+var level_buttons = []
 
 func _ready():
-	# Root layout
 	var root = VBoxContainer.new()
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(root)
@@ -31,16 +31,26 @@ func _ready():
 	levels_tab.name = "Levels"
 	tab_container.add_child(levels_tab)
 
+	# Check Win
+	_check_all_levels_completed(levels_tab)
+
 	var lvl_grid = GridContainer.new()
 	lvl_grid.columns = 3
 	levels_tab.add_child(lvl_grid)
 
+	level_buttons = []
 	for i in range(1, 6):
 		var btn = Button.new()
 		btn.text = "Level " + str(i)
 		btn.custom_minimum_size = Vector2(100, 50)
 		btn.pressed.connect(_on_level_selected.bind(i))
+
+		# Change color if completed
+		if i in GameManager.completed_levels:
+			btn.modulate = Color.GREEN
+
 		lvl_grid.add_child(btn)
+		level_buttons.append(btn)
 
 	var save_btn = Button.new()
 	save_btn.text = "Save Game"
@@ -68,18 +78,16 @@ func _ready():
 	inv_tab.name = "Inventory"
 	tab_container.add_child(inv_tab)
 
-	# Hero Selector
 	var hero_box = HBoxContainer.new()
 	inv_tab.add_child(hero_box)
 	for i in range(GameManager.party.size()):
 		var btn = Button.new()
 		btn.text = GameManager.party[i]["name"]
 		btn.toggle_mode = true
-		btn.button_group = ButtonGroup.new() # This doesn't work well created inside loop without shared resource, but logic below handles it
+		btn.button_group = ButtonGroup.new()
 		btn.pressed.connect(_on_hero_selected.bind(i))
 		hero_box.add_child(btn)
 
-	# Equipment Slots
 	var equip_lbl = Label.new()
 	equip_lbl.text = "Current Equipment:"
 	inv_tab.add_child(equip_lbl)
@@ -88,7 +96,6 @@ func _ready():
 	equipment_grid.columns = 5
 	inv_tab.add_child(equipment_grid)
 
-	# Inventory List
 	var inv_lbl = Label.new()
 	inv_lbl.text = "Inventory (Click to Equip):"
 	inv_tab.add_child(inv_lbl)
@@ -102,6 +109,26 @@ func _ready():
 	scroll.add_child(inventory_list_container)
 
 	_refresh_inventory_tab()
+
+func _check_all_levels_completed(parent_node):
+	var all_done = true
+	for i in range(1, 6):
+		if not i in GameManager.completed_levels:
+			all_done = false
+			break
+
+	if all_done:
+		var win_lbl = Label.new()
+		win_lbl.text = "GANASTE EL JUEGO!!!"
+		win_lbl.add_theme_font_size_override("font_size", 24)
+		win_lbl.add_theme_color_override("font_color", Color.YELLOW)
+		win_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		parent_node.add_child(win_lbl)
+
+		# Spacer
+		var sp = Control.new()
+		sp.custom_minimum_size = Vector2(0, 20)
+		parent_node.add_child(sp)
 
 func _update_gold_label():
 	gold_label.text = "Gold: " + str(GameManager.gold)
@@ -139,7 +166,7 @@ func _refresh_shop():
 func _on_buy_pressed(item_id):
 	if GameManager.buy_item(item_id):
 		_update_gold_label()
-		_refresh_inventory_tab() # Refresh if visible
+		_refresh_inventory_tab()
 	else:
 		print("Not enough gold!")
 
@@ -149,7 +176,6 @@ func _on_hero_selected(idx):
 	_refresh_inventory_tab()
 
 func _refresh_inventory_tab():
-	# Clear Equipment View
 	for c in equipment_grid.get_children():
 		c.queue_free()
 
@@ -169,7 +195,6 @@ func _refresh_inventory_tab():
 		slot_btn.pressed.connect(_on_unequip_pressed.bind(slot))
 		equipment_grid.add_child(slot_btn)
 
-	# Clear Inventory List
 	for c in inventory_list_container.get_children():
 		c.queue_free()
 

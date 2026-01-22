@@ -10,6 +10,7 @@ Este documento detalla la estructura de clases, funciones y comportamiento del s
 *   `party`: Array de diccionarios. Almacena el estado de los personajes (HP, XP, Nivel, Equipamiento, Stats Base).
 *   `inventory`: Array de Strings. IDs de items en posesión.
 *   `gold`: Entero. Dinero actual.
+*   `completed_levels`: Array de enteros. Registra los índices de los niveles superados.
 *   `selected_level`: Entero. Almacena el nivel seleccionado para la escena de combate.
 *   `enemy_database`: Diccionario. Datos cargados desde `res://data/enemies.json`.
 *   `level_database`: Diccionario. Datos cargados desde `res://data/levels.json`.
@@ -18,11 +19,10 @@ Este documento detalla la estructura de clases, funciones y comportamiento del s
 
 ### Funciones Principales
 *   `new_game()`: Inicializa una nueva partida.
-*   `save_game()` / `load_game()`: Persistencia en `user://savegame.json`. Guarda party, inventario y oro.
+*   `save_game()` / `load_game()`: Persistencia en `user://savegame.json`. Guarda party, inventario, oro y niveles completados.
 *   `buy_item(item_id)`: Resta oro y añade item al inventario si es posible.
 *   `equip_item(member_idx, item_id)`: Equipa un item a un personaje.
-*   `unequip_item(member_idx, slot)`: Desequipa item.
-*   `gain_party_xp(amount)`: Otorga XP y verifica Level Up usando `growth.json`.
+*   `mark_level_complete(level_idx)`: Marca un nivel como completado y guarda el juego.
 
 ---
 
@@ -32,13 +32,18 @@ El juego carga configuración desde archivos JSON en `res://data/`.
 *   `items.json`: Define items, slots (weapon, helmet, chest, pants, boots), precio y estadísticas.
 *   `enemies.json`: Define atributos de enemigos y tipo de IA.
 *   `levels.json`: Define composición de enemigos por nivel.
-*   `growth.json`: Define estadísticas base (HP, Daño, Stamina, Regen, XP Requerida) por Nivel.
+*   `growth.json`: Define estadísticas base por Nivel.
 
 ---
 
 ## 3. Escena: LevelSelector
 **Archivo:** `scripts/scenes/LevelSelector.gd`
 **Descripción:** Hub principal del juego con selección de nivel, tienda e inventario.
+
+### Comportamiento
+*   Muestra botones para cada nivel.
+*   **Feedback Visual:** Si un nivel ha sido completado, su botón se tiñe de color Verde.
+*   **Victoria:** Si todos los niveles (1-5) están completados, muestra un mensaje "GANASTE EL JUEGO!!!".
 
 ---
 
@@ -49,10 +54,5 @@ El juego carga configuración desde archivos JSON en `res://data/`.
 ### Mecánicas
 *   **Player (Hero 1):** Controlado por el usuario. Input Q/W/E consume stamina del Player.
 *   **Compañeros (AI):** Actúan automáticamente (Curar/Atacar) cuando su Stamina llega a 30.
-*   **Stats Dinámicos:**
-    *   **HP / Max HP:** Base por Nivel + Bonus Equipamiento.
-    *   **Daño:** Base por Nivel + Bonus Equipamiento + Multiplicador de Combo.
-    *   **Stamina:** Base por Nivel + Bonus Equipamiento.
-*   **Progresión:**
-    *   Al ganar combate, se obtiene XP.
-    *   Si XP > Exp Requerida (según `growth.json`), el personaje sube de nivel, incrementando sus stats base y curándose completamente.
+*   **Stats Dinámicos:** HP, Daño y Stamina calculados en base a Nivel y Equipo.
+*   **Progresión:** Al ganar combate, se obtiene XP, se marca el nivel como completado y se guarda la partida.

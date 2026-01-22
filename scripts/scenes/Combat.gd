@@ -50,16 +50,8 @@ func _calculate_party_stats():
 
 	for i in range(GameManager.party.size()):
 		var member = GameManager.party[i]
-		# Use member's base stats + equipment bonus
 		var base_stam = member.get("base_stamina", 100)
 		var base_regen = member.get("base_stamina_regen", 1.0)
-
-		# get_member_effective_stat adds equipment stats to a given base value
-		# Note: get_member_effective_stat logic in GameManager handles summing bonus.
-		# But here we pass 0 as base because we want ONLY the bonus,
-		# OR we pass base_stam and let it add?
-		# Looking at GameManager: `val = base_value ... val += stats[name]`.
-		# So we pass base_stam.
 
 		var total_stam = GameManager.get_member_effective_stat(i, "stamina", base_stam)
 		var total_regen = GameManager.get_member_effective_stat(i, "stamina_regen", base_regen)
@@ -127,8 +119,8 @@ func _refresh_party_ui():
 		panel.add_child(vbox)
 
 		# Stats
-		var bonus_hp = GameManager.get_member_effective_stat(i, "hp", 0) # Only bonus
-		var total_max_hp = member["max_hp"] + bonus_hp # max_hp in member is base from growth
+		var bonus_hp = GameManager.get_member_effective_stat(i, "hp", 0)
+		var total_max_hp = member["max_hp"] + bonus_hp
 
 		var name_lbl = Label.new()
 		name_lbl.text = member["name"] + " (Lvl " + str(member["level"]) + ")"
@@ -253,7 +245,6 @@ func _ai_companion_act(member_idx):
 		log_label.text = GameManager.party[member_idx]["name"] + " heals party for " + str(heal_amt)
 	else:
 		# Attack
-		# Use member base damage + equipment bonus
 		var base_dmg = GameManager.party[member_idx].get("base_damage", 2)
 		var total_dmg = GameManager.get_member_effective_stat(member_idx, "damage", base_dmg)
 
@@ -346,19 +337,8 @@ func _execute_combo():
 		log_text += "Heal party " + str(heal_base) + ". "
 
 	# Damage
-	# Player Base Damage + Bonus
 	var base_dmg_stat = GameManager.party[0].get("base_damage", 2)
-	var dmg_bonus = GameManager.get_member_effective_stat(0, "damage", base_dmg_stat) # Total Damage Stat
-
-	# But wait, logic was: (q*1 + e*2) + bonus.
-	# Now we have a 'base_damage' stat. Should that replace the (1 or 2)?
-	# The prompt says: "diccionario de crecimiento... hp, attack...".
-	# So 'attack' (base_damage) should probably scale the damage.
-	# Let's interpret: Damage = (Combo Multiplier * Attack Stat).
-	# Q = 1x Attack, E = 2x Attack?
-	# Previous logic: (q*1) + (e*2) + bonus.
-	# New Logic suggestion: (q * 1 * Attack) + (e * 2 * Attack)? Or just Attack + Combo?
-	# Let's keep it additive to be safe with low numbers: (q*1 + e*2) + TotalAttackStat.
+	var dmg_bonus = GameManager.get_member_effective_stat(0, "damage", base_dmg_stat)
 
 	var combo_dmg = (q * 1) + (e * 2)
 	var total_dmg = combo_dmg + dmg_bonus
@@ -389,7 +369,8 @@ func _check_win_condition():
 		is_combat_active = false
 		log_label.text = "Victory! gained " + str(total_xp) + " XP."
 		GameManager.gain_party_xp(total_xp)
-		GameManager.save_game()
+		# Track completion
+		GameManager.mark_level_complete(GameManager.selected_level)
 
 		await get_tree().create_timer(2.0).timeout
 		get_tree().change_scene_to_file("res://scenes/LevelSelector.tscn")

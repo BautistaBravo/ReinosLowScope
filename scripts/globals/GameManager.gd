@@ -10,6 +10,7 @@ var party = []
 var inventory = []
 var gold = 100
 var selected_level = 1
+var completed_levels = [] # Array of ints
 
 var enemy_database = {}
 var level_database = {}
@@ -52,6 +53,7 @@ func _init_default_party():
 	party = []
 	inventory = []
 	gold = 100
+	completed_levels = []
 
 	var base_stats = _get_stats_for_level(1)
 
@@ -87,7 +89,8 @@ func save_game():
 		var data = {
 			"party": party,
 			"inventory": inventory,
-			"gold": gold
+			"gold": gold,
+			"completed_levels": completed_levels
 		}
 		file.store_string(JSON.stringify(data))
 		print("Game Saved")
@@ -107,6 +110,10 @@ func load_game() -> bool:
 				inventory = data["inventory"]
 			if "gold" in data:
 				gold = int(data["gold"])
+			if "completed_levels" in data:
+				completed_levels = data["completed_levels"]
+			else:
+				completed_levels = []
 			return true
 	return false
 
@@ -166,6 +173,11 @@ func _check_level_up(member):
 
 		# Check recursive level up (if XP was massive)
 		_check_level_up(member)
+
+func mark_level_complete(level_idx):
+	if not level_idx in completed_levels:
+		completed_levels.append(level_idx)
+		save_game()
 
 # --- Item System ---
 
