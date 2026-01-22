@@ -25,6 +25,11 @@ var selected_enemy_index = -1
 var enemies_data = []
 var enemy_atb_gauges = []
 
+# Debuff State: Array of Arrays/Dictionaries
+# party_debuffs[member_idx] = [ { "type": "slowed", "duration": 5.0 }, ... ]
+var party_debuffs = []
+var enemy_debuffs = []
+
 # UI References
 var stamina_bar: ProgressBar
 var input_label: Label
@@ -35,10 +40,11 @@ var input_feedback: Label
 
 func _ready():
 	_calculate_party_stats()
-	# Initialize run-time stamina
 	party_stamina = []
+	party_debuffs = []
 	for i in range(GameManager.party.size()):
 		party_stamina.append(party_max_stamina[i])
+		party_debuffs.append([]) # Init debuff list for each member
 
 	player_stamina = party_stamina[0]
 	input_buffer = []
@@ -64,7 +70,6 @@ func _calculate_party_stats():
 		party_max_stamina.append(total_stam)
 		party_stamina_regen.append(total_regen)
 
-	# Player alias
 	player_max_stamina = party_max_stamina[0]
 	player_stamina_regen = party_stamina_regen[0]
 
@@ -73,7 +78,6 @@ func _build_ui():
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(root)
 
-	# Top Bar: Player Stamina
 	var top_bar = HBoxContainer.new()
 	root.add_child(top_bar)
 
@@ -123,7 +127,6 @@ func _refresh_party_ui():
 		var vbox = VBoxContainer.new()
 		panel.add_child(vbox)
 
-		# Stats
 		var bonus_hp = GameManager.get_member_effective_stat(i, "hp", 0)
 		var total_max_hp = member["max_hp"] + bonus_hp
 
@@ -131,7 +134,6 @@ func _refresh_party_ui():
 		name_lbl.text = member["name"] + " (Lvl " + str(member["level"]) + ")"
 		vbox.add_child(name_lbl)
 
-		# HP Bar
 		var hp_bar = ProgressBar.new()
 		hp_bar.max_value = total_max_hp
 		hp_bar.value = member["hp"]
@@ -142,7 +144,6 @@ func _refresh_party_ui():
 		hp_text.text = str(member["hp"]) + "/" + str(total_max_hp)
 		vbox.add_child(hp_text)
 
-		# Stamina Bar
 		var s_lbl = Label.new()
 		s_lbl.text = "Stamina"
 		s_lbl.add_theme_font_size_override("font_size", 10)
@@ -157,10 +158,11 @@ func _refresh_party_ui():
 func _load_enemies():
 	enemies_data = GameManager.get_level_data(GameManager.selected_level)
 	enemy_atb_gauges = []
+	enemy_debuffs = []
 	for e in enemies_data:
 		enemy_atb_gauges.append(0.0)
-		# Init last_attacker tracking
 		e["last_attacker"] = -1
+		enemy_debuffs.append([]) # Init debuff list for each enemy
 
 	_refresh_enemy_ui()
 
@@ -177,6 +179,14 @@ func _refresh_enemy_ui():
 		btn.toggle_mode = true
 		btn.button_pressed = (i == selected_enemy_index)
 		btn.text = enemy["name"] + "\nHP: " + str(enemy["hp"])
+
+		# Show Debuffs
+		var debuff_text = ""
+		for d in enemy_debuffs[i]:
+			debuff_text += d["type"].left(1).to_upper() + " "
+		if debuff_text != "":
+			btn.text += "\n[" + debuff_text + "]"
+
 		btn.custom_minimum_size = Vector2(120, 60)
 		btn.pressed.connect(_on_enemy_selected.bind(i))
 		enemy_container.add_child(btn)
@@ -195,14 +205,22 @@ func _process(delta):
 	if not is_combat_active:
 		return
 
-	# Input Cooldown
 	if input_cooldown_timer > 0:
 		input_cooldown_timer -= delta
+
+	# Process Debuffs
+	_process_debuffs(delta)
 
 	# Regen Party Stamina
 	for i in range(party_stamina.size()):
 		if GameManager.party[i]["hp"] > 0:
-			party_stamina[i] = min(party_stamina[i] + party_stamina_regen[i] * delta, party_max_stamina[i])
+			# Check Slowed (halves regen)
+			var multiplier = 1.0
+			for d in party_debuffs[i]:
+				if d["type"] == "slowed":
+					multiplier *= 0.5
+
+			party_stamina[i] = min(party_stamina[i] + (party_stamina_regen[i] * multiplier) * delta, party_max_stamina[i])
 
 			if i > 0 and party_stamina[i] >= AI_ACTION_COST:
 				_ai_companion_act(i)
@@ -220,6 +238,83 @@ func _process(delta):
 			if enemy_atb_gauges[i] >= 100.0:
 				enemy_atb_gauges[i] = 0.0
 				_enemy_attack(i)
+
+func _process_debuffs(delta):
+	# Update Party Debuffs
+	for i in range(party_debuffs.size()):
+		var active_list = []
+		for d in party_debuffs[i]:
+			d["duration"] -= delta
+
+			if d["type"] == "bleed":
+				d["tick_timer"] -= delta
+				if d["tick_timer"] <= 0:
+					d["tick_timer"] = 1.0
+					var dmg = d["stacks"]
+					GameManager.damage_party_member(i, dmg)
+					log_label.text = GameManager.party[i]["name"] + " bleeds for " + str(dmg)
+					_check_loss_condition()
+
+			if d["duration"] > 0:
+				active_list.append(d)
+		party_debuffs[i] = active_list
+
+	# Update Enemy Debuffs
+	for i in range(enemy_debuffs.size()):
+		if enemies_data[i]["hp"] <= 0: continue
+		var active_list = []
+		for d in enemy_debuffs[i]:
+			d["duration"] -= delta
+
+			if d["type"] == "bleed":
+				d["tick_timer"] -= delta
+				if d["tick_timer"] <= 0:
+					d["tick_timer"] = 1.0
+					var dmg = d["stacks"]
+					enemies_data[i]["hp"] -= dmg
+					log_label.text = enemies_data[i]["name"] + " bleeds for " + str(dmg)
+					_refresh_enemy_ui()
+					_check_win_condition()
+
+			if d["duration"] > 0:
+				active_list.append(d)
+		enemy_debuffs[i] = active_list
+
+func apply_debuff(is_party, index, type, duration):
+	var list_ref = null
+	if is_party:
+		if index >= 0 and index < party_debuffs.size():
+			list_ref = party_debuffs[index]
+	else:
+		if index >= 0 and index < enemy_debuffs.size():
+			list_ref = enemy_debuffs[index]
+
+	if list_ref == null: return
+
+	# Check existing
+	var existing = null
+	for d in list_ref:
+		if d["type"] == type:
+			existing = d
+			break
+
+	if existing:
+		existing["duration"] = duration # Refresh duration
+		if type == "bleed":
+			existing["stacks"] += 1
+	else:
+		var new_debuff = { "type": type, "duration": duration }
+		if type == "bleed":
+			new_debuff["stacks"] = 1
+			new_debuff["tick_timer"] = 1.0
+
+		# Since list_ref is a reference to the array inside the array of arrays?
+		# In GDScript arrays are passed by reference.
+		# But `list_ref` is a local var holding the array. Modifying `list_ref` modifies the original array object.
+		list_ref.append(new_debuff)
+
+	if not is_party:
+		_refresh_enemy_ui() # Show debuff icon
 
 func _update_party_bars_only():
 	var children = party_container.get_children()
@@ -273,8 +368,6 @@ func _ai_companion_act(member_idx):
 		if targets.size() > 0:
 			var t = targets.pick_random()
 			enemies_data[t]["hp"] -= total_dmg
-
-			# Record Last Attacker
 			enemies_data[t]["last_attacker"] = member_idx
 
 			log_label.text = GameManager.party[member_idx]["name"] + " hits " + enemies_data[t]["name"] + " for " + str(total_dmg)
@@ -328,6 +421,14 @@ func _enemy_attack(enemy_idx):
 	if target_idx != -1:
 		var dmg = enemies_data[enemy_idx].get("damage", 2)
 		GameManager.damage_party_member(target_idx, dmg)
+
+		# Example: Enemies could apply debuffs too?
+		# Applying Bleed chance for Skeleton
+		if enemies_data[enemy_idx]["name"] == "Skeleton":
+			if randf() < 0.5:
+				apply_debuff(true, target_idx, "bleed", 4.0)
+				log_label.text += " Applied Bleed!"
+
 		log_label.text = enemies_data[enemy_idx]["name"] + " hits " + GameManager.party[target_idx]["name"] + " for " + str(dmg)
 		_check_loss_condition()
 
@@ -346,21 +447,18 @@ func _input(event):
 
 		if key != "":
 			if is_targeting_mode:
-				# Ignore combo inputs while waiting for target
 				return
 
-			# Check Cooldown
 			if input_cooldown_timer > 0:
-				return # Ignore input if cooldown is active
+				return
 
 			if party_stamina[0] >= BASE_STAMINA_COST:
 				party_stamina[0] -= BASE_STAMINA_COST
 				input_buffer.append(key)
-				input_cooldown_timer = INPUT_COOLDOWN # Set cooldown
+				input_cooldown_timer = INPUT_COOLDOWN
 				_update_input_label()
 
 				if input_buffer.size() >= 3:
-					# Trigger Target Selection Mode
 					is_targeting_mode = true
 					input_feedback.text = "Combo Ready! CLICK A TARGET!"
 			else:
@@ -396,11 +494,20 @@ func _execute_combo():
 	if combo_dmg > 0:
 		if selected_enemy_index != -1 and selected_enemy_index < enemies_data.size() and enemies_data[selected_enemy_index]["hp"] > 0:
 			enemies_data[selected_enemy_index]["hp"] -= total_dmg
-
-			# Record Last Attacker (Player = 0)
 			enemies_data[selected_enemy_index]["last_attacker"] = 0
 
 			log_text += "Hit enemy for " + str(total_dmg) + "."
+
+			# Apply Debuffs based on input
+			if q > 0:
+				# Q Apply Bleed
+				apply_debuff(false, selected_enemy_index, "bleed", 4.0)
+				log_text += " Applied Bleed."
+			if e > 0:
+				# E Apply Slowed
+				apply_debuff(false, selected_enemy_index, "slowed", 5.0)
+				log_text += " Applied Slowed."
+
 			_refresh_enemy_ui()
 			_check_win_condition()
 		else:
