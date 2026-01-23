@@ -111,7 +111,9 @@ func load_game() -> bool:
 			if "gold" in data:
 				gold = int(data["gold"])
 			if "completed_levels" in data:
-				completed_levels = data["completed_levels"]
+				completed_levels = []
+				for lvl in data["completed_levels"]:
+					completed_levels.append(int(lvl))
 			else:
 				completed_levels = []
 			return true
