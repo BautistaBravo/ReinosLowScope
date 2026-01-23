@@ -7,7 +7,7 @@ const INPUT_COOLDOWN = 0.5
 const START_COMBAT_DELAY = 2.0
 
 # State
-var is_combat_active = false # Changed to false initially
+var is_combat_active = false
 var is_targeting_mode = false
 
 # Player State (Hero 1)
@@ -23,11 +23,11 @@ var party_max_stamina = []
 var party_stamina_regen = []
 
 var selected_enemy_index = -1
+var target_cursor_index = 0 # Cursor for arrow key selection
 var enemies_data = []
 var enemy_atb_gauges = []
 
-# Debuff/Buff State: Array of Arrays/Dictionaries
-# party_debuffs[member_idx] = [ { "type": "slowed", "duration": 5.0 }, ... ]
+# Debuff/Buff State
 var party_debuffs = []
 var enemy_debuffs = []
 
@@ -52,12 +52,12 @@ func _ready():
 	is_targeting_mode = false
 	input_cooldown_timer = 0.0
 	is_combat_active = false
+	target_cursor_index = 0
 
 	_build_ui()
 	_load_party()
 	_load_enemies()
 
-	# Start delay sequence
 	log_label.text = "Get Ready..."
 	await get_tree().create_timer(START_COMBAT_DELAY).timeout
 
@@ -67,18 +67,14 @@ func _ready():
 func _calculate_party_stats():
 	party_max_stamina = []
 	party_stamina_regen = []
-
 	for i in range(GameManager.party.size()):
 		var member = GameManager.party[i]
 		var base_stam = member.get("base_stamina", 100)
 		var base_regen = member.get("base_stamina_regen", 1.0)
-
 		var total_stam = GameManager.get_member_effective_stat(i, "stamina", base_stam)
 		var total_regen = GameManager.get_member_effective_stat(i, "stamina_regen", base_regen)
-
 		party_max_stamina.append(total_stam)
 		party_stamina_regen.append(total_regen)
-
 	player_max_stamina = party_max_stamina[0]
 	player_stamina_regen = party_stamina_regen[0]
 
@@ -118,7 +114,7 @@ func _build_ui():
 	battle_ground.add_child(enemy_container)
 
 	log_label = Label.new()
-	log_label.text = "Initializing..." # Initial placeholder
+	log_label.text = "Initializing..."
 	root.add_child(log_label)
 
 func _load_party():
@@ -127,12 +123,10 @@ func _load_party():
 func _refresh_party_ui():
 	for child in party_container.get_children():
 		child.queue_free()
-
 	for i in range(GameManager.party.size()):
 		var member = GameManager.party[i]
 		var panel = PanelContainer.new()
 		party_container.add_child(panel)
-
 		var vbox = VBoxContainer.new()
 		panel.add_child(vbox)
 
@@ -176,12 +170,26 @@ func _load_enemies():
 	_refresh_enemy_ui()
 
 func _refresh_enemy_ui():
+	# Rebuild buttons if count changed, or just update?
+	# Simple rebuild is safer for state sync in this prototype.
 	for child in enemy_container.get_children():
 		child.queue_free()
 
 	for i in range(enemies_data.size()):
 		var enemy = enemies_data[i]
 		if enemy["hp"] <= 0:
+			# Placeholder for dead enemy to keep indices aligned?
+			# Or just skip? If we skip, indices shift visually.
+			# Let's add a disabled/invisible placeholder to keep indices consistent for arrow keys?
+			# Actually, shifting indices is fine as long as we map correctly.
+			# But `target_cursor_index` maps to children index.
+			# Let's just create buttons for everyone but disable dead ones.
+			var dead_btn = Button.new()
+			dead_btn.text = "Dead"
+			dead_btn.disabled = true
+			dead_btn.modulate = Color(0.5, 0.5, 0.5, 0.5)
+			dead_btn.custom_minimum_size = Vector2(120, 60)
+			enemy_container.add_child(dead_btn)
 			continue
 
 		var btn = Button.new()
@@ -197,7 +205,36 @@ func _refresh_enemy_ui():
 
 		btn.custom_minimum_size = Vector2(120, 60)
 		btn.pressed.connect(_on_enemy_selected.bind(i))
+
+		# Cursor Highlight
+		if is_targeting_mode and i == target_cursor_index:
+			btn.modulate = Color(1.5, 1.5, 0.5) # Yellowish highlight
+			btn.text = "> " + btn.text + " <"
+		else:
+			btn.modulate = Color(1, 1, 1)
+
 		enemy_container.add_child(btn)
+
+func _move_cursor(direction):
+	if enemies_data.size() == 0: return
+
+	var start_idx = target_cursor_index
+	var current = target_cursor_index
+
+	# Loop until we find a live enemy
+	for _i in range(enemies_data.size()):
+		current += direction
+
+		# Wrap around
+		if current >= enemies_data.size():
+			current = 0
+		if current < 0:
+			current = enemies_data.size() - 1
+
+		if enemies_data[current]["hp"] > 0:
+			target_cursor_index = current
+			_refresh_enemy_ui()
+			return
 
 func _on_enemy_selected(index):
 	if is_targeting_mode:
@@ -432,6 +469,16 @@ func _input(event):
 		return
 
 	if event is InputEventKey and event.pressed and not event.echo:
+		if is_targeting_mode:
+			if event.keycode == KEY_RIGHT:
+				_move_cursor(1)
+			elif event.keycode == KEY_LEFT:
+				_move_cursor(-1)
+			elif event.keycode == KEY_0 or event.keycode == KEY_KP_0:
+				if target_cursor_index >= 0 and target_cursor_index < enemies_data.size():
+					_on_enemy_selected(target_cursor_index)
+			return
+
 		var key = ""
 		if event.keycode == KEY_Q:
 			key = "Q"
@@ -441,9 +488,6 @@ func _input(event):
 			key = "E"
 
 		if key != "":
-			if is_targeting_mode:
-				return
-
 			if input_cooldown_timer > 0:
 				return
 
@@ -455,7 +499,9 @@ func _input(event):
 
 				if input_buffer.size() >= 3:
 					is_targeting_mode = true
-					input_feedback.text = "Combo Ready! CLICK A TARGET!"
+					input_feedback.text = "Combo Ready! Select with Arrows, Confirm with 0"
+					# Auto-select first available target for cursor
+					_move_cursor(0)
 			else:
 				log_label.text = "Not enough stamina!"
 

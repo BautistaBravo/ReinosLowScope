@@ -24,7 +24,6 @@ Este documento detalla la estructura de clases, funciones y comportamiento del s
 *   `equip_item(member_idx, item_id)`: Equipa un item a un personaje.
 *   `mark_level_complete(level_idx)`: Marca un nivel como completado y guarda el juego.
 *   `gain_rewards(xp_amount, gold_amount)`: Añade Oro globalmente y XP a cada miembro de la party, verificando Level Up.
-*   `get_stats_for_level(lvl)`: Retorna el diccionario de stats base para un nivel dado.
 
 ---
 
@@ -42,16 +41,9 @@ El juego carga configuración desde archivos JSON en `res://data/`.
 **Archivo:** `scripts/scenes/LevelSelector.gd`
 **Descripción:** Hub principal del juego con selección de nivel, tienda e inventario.
 
-### Pestañas
-1.  **Levels:** Selección de dificultad. Muestra botones verdes para niveles completados.
-2.  **Shop:** Compra de items.
-3.  **Inventory:** Equipamiento de items.
-4.  **Party Stats:** Muestra estadísticas detalladas de cada héroe:
-    *   HP Actual / Max (Desglose Base + Items).
-    *   Daño Total (Desglose Base + Items).
-    *   XP Actual / Requerida y XP faltante para nivel.
-
 ### Comportamiento
+*   Muestra botones para cada nivel.
+*   **Feedback Visual:** Si un nivel ha sido completado, su botón se tiñe de color Verde.
 *   **Victoria:** Si todos los niveles (1-5) están completados, muestra un mensaje "GANASTE EL JUEGO!!!".
 
 ---
@@ -63,8 +55,10 @@ El juego carga configuración desde archivos JSON en `res://data/`.
 ### Mecánicas
 *   **Player (Hero 1):** Controlado por el usuario.
     1.  **Input Combo:** Introduce secuencia Q/W/E (3 teclas). Existe un **Cooldown de 0.5s** entre cada input.
-    2.  **Targeting:** Una vez completada la secuencia, el juego espera a que el jugador **clickee un enemigo**.
-    3.  **Ejecución:** Al clickear, se dispara el ataque (Daño/Cura) y se reinicia el combo.
+    2.  **Targeting:** Una vez completada la secuencia, se activa el modo de selección.
+        *   **Cursor:** Se mueve con las flechas (**Left/Right**) sobre los enemigos vivos.
+        *   **Confirmar:** Se confirma el objetivo presionando la tecla **0**.
+    3.  **Ejecución:** Al confirmar, se dispara el ataque (Daño/Cura) y se reinicia el combo.
 *   **Buffs y Debuffs:**
     *   **Bleed (Debuff):** Stackeable. Pierde 1 HP por stack cada segundo. Duración 4s. Aplicado por inputs **Q**.
     *   **Slowed (Debuff):** Reduce regeneración de stamina a la mitad. Duración 5s. Aplicado por inputs **E**.
