@@ -1,6 +1,9 @@
 extends Control
 
 func _ready():
+	# Play Music
+	SoundManager.play_music("MainMenuTheme")
+
 	var vbox = VBoxContainer.new()
 	# Center the container
 	vbox.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
@@ -32,14 +35,17 @@ func _ready():
 	vbox.add_child(btn_load)
 
 func _on_new_game_pressed():
+	SoundManager.play_sfx("click")
 	GameManager.new_game()
 	get_tree().change_scene_to_file("res://scenes/LevelSelector.tscn")
 
 func _on_new_game_animated_pressed():
+	SoundManager.play_sfx("click")
 	GameManager.new_game()
 	get_tree().change_scene_to_file("res://scenes/LevelSelectorAnimated.tscn")
 
 func _on_load_game_pressed():
+	SoundManager.play_sfx("click")
 	if GameManager.load_game():
 		get_tree().change_scene_to_file("res://scenes/LevelSelector.tscn")
 	else:

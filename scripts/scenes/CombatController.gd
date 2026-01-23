@@ -43,6 +43,8 @@ func _ready():
 	_init_combat()
 
 func _init_combat():
+	SoundManager.play_music("BattleTheme")
+
 	_calculate_party_stats()
 	party_stamina = []
 	party_debuffs = []
@@ -220,6 +222,7 @@ func _ai_companion_act(member_idx):
 	if action == "heal":
 		var heal_amt = 5
 		GameManager.heal_party(heal_amt)
+		SoundManager.play_sfx("click") # Generic magic sound?
 		emit_signal("log_message", GameManager.party[member_idx]["name"] + " heals party for " + str(heal_amt))
 	else:
 		var base_dmg = GameManager.party[member_idx].get("base_damage", 2)
@@ -232,6 +235,7 @@ func _ai_companion_act(member_idx):
 			var t = targets.pick_random()
 			enemies_data[t]["hp"] -= total_dmg
 			enemies_data[t]["last_attacker"] = member_idx
+			SoundManager.play_sfx("hit")
 			emit_signal("log_message", GameManager.party[member_idx]["name"] + " hits " + enemies_data[t]["name"] + " for " + str(total_dmg))
 			emit_signal("enemy_updated", enemies_data, selected_enemy_index)
 			_check_win_condition()
@@ -281,6 +285,7 @@ func _enemy_attack(enemy_idx):
 	if target_idx != -1:
 		var dmg = enemies_data[enemy_idx].get("damage", 2)
 		GameManager.damage_party_member(target_idx, dmg)
+		SoundManager.play_sfx("hit")
 
 		if enemies_data[enemy_idx]["name"] == "Skeleton":
 			if randf() < 0.5:
@@ -312,6 +317,7 @@ func handle_input(event):
 			if party_stamina[0] >= BASE_STAMINA_COST:
 				party_stamina[0] -= BASE_STAMINA_COST
 				input_buffer.append(key)
+				SoundManager.play_sfx("click")
 				input_cooldown_timer = INPUT_COOLDOWN
 
 				var txt = "Input: "
@@ -336,6 +342,7 @@ func _move_cursor(direction):
 		if current >= enemies_data.size(): current = 0
 		if current < 0: current = enemies_data.size() - 1
 		if enemies_data[current]["hp"] > 0:
+			SoundManager.play_sfx("click")
 			target_cursor_index = current
 			selected_enemy_index = current # Sync for View highlighting
 			emit_signal("enemy_updated", enemies_data, selected_enemy_index)
@@ -361,6 +368,7 @@ func _execute_combo():
 		log_text += "Heal party " + str(heal_base) + ". "
 		apply_debuff(true, 0, "attack_boost", 10.0)
 		log_text += " Applied Attack Boost."
+		SoundManager.play_sfx("click")
 
 	var base_dmg_stat = GameManager.party[0].get("base_damage", 2)
 	var dmg_bonus = GameManager.get_member_effective_stat(0, "damage", base_dmg_stat)
@@ -376,6 +384,7 @@ func _execute_combo():
 		if selected_enemy_index != -1 and selected_enemy_index < enemies_data.size() and enemies_data[selected_enemy_index]["hp"] > 0:
 			enemies_data[selected_enemy_index]["hp"] -= total_dmg
 			enemies_data[selected_enemy_index]["last_attacker"] = 0
+			SoundManager.play_sfx("hit")
 			log_text += "Hit enemy for " + str(total_dmg) + "."
 			if q > 0:
 				apply_debuff(false, selected_enemy_index, "bleed", 4.0)
@@ -405,6 +414,7 @@ func _check_win_condition():
 
 	if all_dead:
 		is_combat_active = false
+		SoundManager.play_sfx("victory")
 		emit_signal("log_message", "Victory! gained " + str(total_xp) + " XP and " + str(total_gold) + " Gold.")
 		GameManager.gain_rewards(total_xp, total_gold)
 		GameManager.mark_level_complete(GameManager.selected_level)
@@ -420,6 +430,7 @@ func _check_loss_condition():
 			break
 	if all_dead:
 		is_combat_active = false
+		SoundManager.play_sfx("click")
 		emit_signal("log_message", "Defeat...")
 		await get_tree().create_timer(2.0).timeout
 		emit_signal("combat_ended", false)

@@ -12,7 +12,7 @@ signal message_log(text)
 var selected_hero_idx = 0
 
 func _ready():
-	# Initial data push
+	SoundManager.play_music("HubTheme")
 	call_deferred("refresh_all")
 
 func refresh_all():
@@ -24,34 +24,40 @@ func refresh_all():
 	_check_win()
 
 func select_hero(idx):
+	SoundManager.play_sfx("click")
 	selected_hero_idx = idx
 	emit_signal("inventory_updated", GameManager.inventory, selected_hero_idx)
 
 func buy_item(item_id):
 	if GameManager.buy_item(item_id):
+		SoundManager.play_sfx("buy")
 		emit_signal("gold_updated", GameManager.gold)
 		emit_signal("inventory_updated", GameManager.inventory, selected_hero_idx)
 		emit_signal("stats_updated", GameManager.party)
 		emit_signal("message_log", "Bought " + str(item_id))
 	else:
+		SoundManager.play_sfx("click")
 		emit_signal("message_log", "Not enough gold!")
 
 func equip_item(item_id):
+	SoundManager.play_sfx("click")
 	GameManager.equip_item(selected_hero_idx, item_id)
 	emit_signal("inventory_updated", GameManager.inventory, selected_hero_idx)
 	emit_signal("stats_updated", GameManager.party)
 
 func unequip_item(slot):
+	SoundManager.play_sfx("click")
 	GameManager.unequip_item(selected_hero_idx, slot)
 	emit_signal("inventory_updated", GameManager.inventory, selected_hero_idx)
 	emit_signal("stats_updated", GameManager.party)
 
 func select_level(lvl):
+	SoundManager.play_sfx("click")
 	GameManager.selected_level = lvl
-	# View handles scene change, we just validate?
-	# For prototype, assume valid.
+	# View handles scene change
 
 func save_game():
+	SoundManager.play_sfx("click")
 	GameManager.save_game()
 	emit_signal("message_log", "Game Saved")
 
@@ -62,4 +68,5 @@ func _check_win():
 			all_done = false
 			break
 	if all_done:
+		SoundManager.play_sfx("win_game")
 		emit_signal("game_won")

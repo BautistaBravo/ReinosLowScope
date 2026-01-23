@@ -9,6 +9,7 @@ config/features=PackedStringArray("4.2", "Forward Plus")
 [autoload]
 
 GameManager="*res://scripts/globals/GameManager.gd"
+SoundManager="*res://scripts/globals/SoundManager.gd"
 
 [display]
 

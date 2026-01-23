@@ -3,7 +3,7 @@ extends Control
 # Constants
 const BASE_STAMINA_COST = 5
 const AI_ACTION_COST = 30.0
-const INPUT_COOLDOWN = 0.15
+const INPUT_COOLDOWN = 0.5
 const START_COMBAT_DELAY = 2.0
 
 # State
@@ -40,6 +40,8 @@ var enemy_container: VBoxContainer
 var input_feedback: Label
 
 func _ready():
+	SoundManager.play_music("BattleTheme")
+
 	_calculate_party_stats()
 	party_stamina = []
 	party_debuffs = []
@@ -170,20 +172,12 @@ func _load_enemies():
 	_refresh_enemy_ui()
 
 func _refresh_enemy_ui():
-	# Rebuild buttons if count changed, or just update?
-	# Simple rebuild is safer for state sync in this prototype.
 	for child in enemy_container.get_children():
 		child.queue_free()
 
 	for i in range(enemies_data.size()):
 		var enemy = enemies_data[i]
 		if enemy["hp"] <= 0:
-			# Placeholder for dead enemy to keep indices aligned?
-			# Or just skip? If we skip, indices shift visually.
-			# Let's add a disabled/invisible placeholder to keep indices consistent for arrow keys?
-			# Actually, shifting indices is fine as long as we map correctly.
-			# But `target_cursor_index` maps to children index.
-			# Let's just create buttons for everyone but disable dead ones.
 			var dead_btn = Button.new()
 			dead_btn.text = "Dead"
 			dead_btn.disabled = true
@@ -232,6 +226,7 @@ func _move_cursor(direction):
 			current = enemies_data.size() - 1
 
 		if enemies_data[current]["hp"] > 0:
+			SoundManager.play_sfx("click")
 			target_cursor_index = current
 			_refresh_enemy_ui()
 			return
@@ -389,8 +384,10 @@ func _ai_companion_act(member_idx):
 	if action == "heal":
 		var heal_amt = 5
 		GameManager.heal_party(heal_amt)
+		SoundManager.play_sfx("click")
 		log_label.text = GameManager.party[member_idx]["name"] + " heals party for " + str(heal_amt)
 	else:
+		# Attack
 		var base_dmg = GameManager.party[member_idx].get("base_damage", 2)
 		var total_dmg = GameManager.get_member_effective_stat(member_idx, "damage", base_dmg)
 
@@ -404,6 +401,7 @@ func _ai_companion_act(member_idx):
 			enemies_data[t]["hp"] -= total_dmg
 			enemies_data[t]["last_attacker"] = member_idx
 
+			SoundManager.play_sfx("hit")
 			log_label.text = GameManager.party[member_idx]["name"] + " hits " + enemies_data[t]["name"] + " for " + str(total_dmg)
 			_refresh_enemy_ui()
 			_check_win_condition()
@@ -455,6 +453,7 @@ func _enemy_attack(enemy_idx):
 	if target_idx != -1:
 		var dmg = enemies_data[enemy_idx].get("damage", 2)
 		GameManager.damage_party_member(target_idx, dmg)
+		SoundManager.play_sfx("hit")
 
 		if enemies_data[enemy_idx]["name"] == "Skeleton":
 			if randf() < 0.5:
@@ -496,6 +495,7 @@ func _input(event):
 				input_buffer.append(key)
 				input_cooldown_timer = INPUT_COOLDOWN
 				_update_input_label()
+				SoundManager.play_sfx("click")
 
 				if input_buffer.size() >= 3:
 					is_targeting_mode = true
@@ -528,6 +528,7 @@ func _execute_combo():
 		# W also applies Attack Boost Buff (Positive effect)
 		apply_debuff(true, 0, "attack_boost", 10.0)
 		log_text += " Applied Attack Boost."
+		SoundManager.play_sfx("click")
 
 	# Damage
 	var base_dmg_stat = GameManager.party[0].get("base_damage", 2)
@@ -550,6 +551,7 @@ func _execute_combo():
 			enemies_data[selected_enemy_index]["hp"] -= total_dmg
 			enemies_data[selected_enemy_index]["last_attacker"] = 0
 
+			SoundManager.play_sfx("hit")
 			log_text += "Hit enemy for " + str(total_dmg) + "."
 
 			if q > 0:
@@ -582,6 +584,7 @@ func _check_win_condition():
 
 	if all_dead:
 		is_combat_active = false
+		SoundManager.play_sfx("victory")
 		log_label.text = "Victory! gained " + str(total_xp) + " XP and " + str(total_gold) + " Gold."
 		GameManager.gain_rewards(total_xp, total_gold)
 		GameManager.mark_level_complete(GameManager.selected_level)
@@ -598,6 +601,7 @@ func _check_loss_condition():
 
 	if all_dead:
 		is_combat_active = false
+		SoundManager.play_sfx("click") # Sad sound?
 		log_label.text = "Defeat..."
 		await get_tree().create_timer(2.0).timeout
 		get_tree().change_scene_to_file("res://scenes/MainMenu.tscn")

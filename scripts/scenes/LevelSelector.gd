@@ -10,6 +10,8 @@ var level_buttons = []
 var stats_container: VBoxContainer
 
 func _ready():
+	SoundManager.play_music("HubTheme")
+
 	var root = VBoxContainer.new()
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(root)
@@ -130,6 +132,7 @@ func _check_all_levels_completed(parent_node):
 			break
 
 	if all_done:
+		SoundManager.play_sfx("win_game")
 		var win_lbl = Label.new()
 		win_lbl.text = "GANASTE EL JUEGO!!!"
 		win_lbl.add_theme_font_size_override("font_size", 24)
@@ -146,13 +149,16 @@ func _update_gold_label():
 	gold_label.text = "Gold: " + str(GameManager.gold)
 
 func _on_level_selected(level_idx):
+	SoundManager.play_sfx("click")
 	GameManager.selected_level = level_idx
 	get_tree().change_scene_to_file("res://scenes/Combat.tscn")
 
 func _on_save_pressed():
+	SoundManager.play_sfx("click")
 	GameManager.save_game()
 
 func _on_back_pressed():
+	SoundManager.play_sfx("click")
 	get_tree().change_scene_to_file("res://scenes/MainMenu.tscn")
 
 # --- SHOP LOGIC ---
@@ -177,14 +183,17 @@ func _refresh_shop():
 
 func _on_buy_pressed(item_id):
 	if GameManager.buy_item(item_id):
+		SoundManager.play_sfx("buy")
 		_update_gold_label()
 		_refresh_inventory_tab()
 		_refresh_stats_tab()
 	else:
+		SoundManager.play_sfx("click") # Fail
 		print("Not enough gold!")
 
 # --- INVENTORY LOGIC ---
 func _on_hero_selected(idx):
+	SoundManager.play_sfx("click")
 	selected_hero_idx = idx
 	_refresh_inventory_tab()
 
@@ -221,11 +230,13 @@ func _refresh_inventory_tab():
 			inventory_list_container.add_child(btn)
 
 func _on_unequip_pressed(slot):
+	SoundManager.play_sfx("click")
 	GameManager.unequip_item(selected_hero_idx, slot)
 	_refresh_inventory_tab()
 	_refresh_stats_tab()
 
 func _on_inventory_item_pressed(item_id):
+	SoundManager.play_sfx("click")
 	GameManager.equip_item(selected_hero_idx, item_id)
 	_refresh_inventory_tab()
 	_refresh_stats_tab()
