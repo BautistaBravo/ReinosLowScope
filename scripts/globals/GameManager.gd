@@ -149,12 +149,13 @@ func damage_party_member(index, amount):
 
 func gain_rewards(xp_amount, gold_amount):
 	gold += gold_amount
-	for member in party:
+	for i in range(party.size()):
+		var member = party[i]
 		if member["hp"] > 0:
 			member["xp"] += xp_amount
-			_check_level_up(member)
+			_check_level_up(i, member)
 
-func _check_level_up(member):
+func _check_level_up(idx, member):
 	var current_lvl = member["level"]
 	var stats = get_stats_for_level(current_lvl)
 	var required = stats.get("exp_required", 100)
@@ -170,11 +171,12 @@ func _check_level_up(member):
 		member["base_stamina"] = new_stats["stamina"]
 		member["base_stamina_regen"] = new_stats["stamina_regen"]
 
-		# Full Heal
-		member["hp"] = member["max_hp"]
+		# Full Heal to Effective Max HP (Base + Items)
+		var effective_max = get_member_effective_stat(idx, "hp", member["max_hp"])
+		member["hp"] = effective_max
 
 		# Check recursive level up (if XP was massive)
-		_check_level_up(member)
+		_check_level_up(idx, member)
 
 func mark_level_complete(level_idx):
 	if not level_idx in completed_levels:
