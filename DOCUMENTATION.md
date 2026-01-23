@@ -27,28 +27,22 @@ Este documento detalla la estructura de clases, funciones y comportamiento del s
 
 ---
 
-## 2. Escena: LevelSelector (Versión Clásica & Animada)
+## 2. Modo Animado (MVC)
 
-### LevelSelectorController (Lógica)
-**Archivo:** `scripts/scenes/LevelSelectorController.gd`
-Este script maneja la lógica de negocio para la selección de niveles, tienda e inventario, desacoplando la lógica de la vista.
-*   **Señales:** Emite eventos como `gold_updated`, `shop_updated`, `inventory_updated` para que la vista (Animated) actualice sus gráficos.
+El juego incluye un modo "Animado" que utiliza una arquitectura Modelo-Vista-Controlador.
 
-### LevelSelectorAnimated (Vista)
-**Archivo:** `scripts/scenes/LevelSelectorAnimated.gd`
-Construye la interfaz gráfica mediante código (usando `TextureRect`, `PlaceholderTexture2D`) y se conecta al Controller.
-*   **Gráficos:** Usa texturas placeholder para fondos, items y personajes.
-*   **MVC:** Escucha las señales del Controller para repintar la UI sin manejar lógica interna.
+### Level Selector Animated
+*   **Controller:** `scripts/scenes/LevelSelectorController.gd`
+*   **View:** `scripts/scenes/LevelSelectorAnimated.gd`
+*   Muestra la interfaz usando nodos gráficos (`TextureRect`) en lugar de controles básicos.
 
-### Comportamiento
-*   Muestra botones para cada nivel.
-*   **Feedback Visual:** Si un nivel ha sido completado, su botón se tiñe de color Verde.
-*   **Victoria:** Si todos los niveles (1-5) están completados, muestra un mensaje "GANASTE EL JUEGO!!!".
+### Combat Animated
+*   **Controller:** `scripts/scenes/CombatController.gd`. Maneja toda la lógica de combate (ATB, Inputs, AI). Emite señales para actualizar la vista.
+*   **View:** `scripts/scenes/CombatAnimated.gd`. Escucha señales y actualiza sprites, barras y textos.
 
 ---
 
-## 3. Escena: Combat
-**Archivo:** `scripts/scenes/Combat.gd`
+## 3. Escena: Combat (Clásica & Animada)
 **Descripción:** Sistema de combate ATB con combos, estadísticas dinámicas y compañeros controlados por IA.
 
 ### Mecánicas

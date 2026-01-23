@@ -139,7 +139,7 @@ func _on_levels_updated(completed_list):
 
 func _on_level_selected(idx):
 	controller.select_level(idx)
-	get_tree().change_scene_to_file("res://scenes/Combat.tscn")
+	get_tree().change_scene_to_file("res://scenes/CombatAnimated.tscn")
 
 func _on_game_won():
 	var win = Label.new()
