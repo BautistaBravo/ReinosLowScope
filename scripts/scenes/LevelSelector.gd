@@ -7,6 +7,7 @@ var inventory_list_container: VBoxContainer
 var equipment_grid: GridContainer
 var shop_list_container: VBoxContainer
 var level_buttons = []
+var stats_container: VBoxContainer
 
 func _ready():
 	var root = VBoxContainer.new()
@@ -110,6 +111,17 @@ func _ready():
 
 	_refresh_inventory_tab()
 
+	# --- TAB 4: PARTY STATS ---
+	var stats_tab = ScrollContainer.new()
+	stats_tab.name = "Party Stats"
+	tab_container.add_child(stats_tab)
+
+	stats_container = VBoxContainer.new()
+	stats_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stats_tab.add_child(stats_container)
+
+	_refresh_stats_tab()
+
 func _check_all_levels_completed(parent_node):
 	var all_done = true
 	for i in range(1, 6):
@@ -167,6 +179,7 @@ func _on_buy_pressed(item_id):
 	if GameManager.buy_item(item_id):
 		_update_gold_label()
 		_refresh_inventory_tab()
+		_refresh_stats_tab()
 	else:
 		print("Not enough gold!")
 
@@ -210,7 +223,57 @@ func _refresh_inventory_tab():
 func _on_unequip_pressed(slot):
 	GameManager.unequip_item(selected_hero_idx, slot)
 	_refresh_inventory_tab()
+	_refresh_stats_tab()
 
 func _on_inventory_item_pressed(item_id):
 	GameManager.equip_item(selected_hero_idx, item_id)
 	_refresh_inventory_tab()
+	_refresh_stats_tab()
+
+# --- STATS LOGIC ---
+func _refresh_stats_tab():
+	if not stats_container: return
+	for c in stats_container.get_children():
+		c.queue_free()
+
+	for i in range(GameManager.party.size()):
+		var member = GameManager.party[i]
+		var panel = PanelContainer.new()
+		stats_container.add_child(panel)
+
+		var vbox = VBoxContainer.new()
+		panel.add_child(vbox)
+
+		# Name and Level
+		var name_lbl = Label.new()
+		name_lbl.text = member["name"] + " - Lvl " + str(member["level"])
+		name_lbl.add_theme_font_size_override("font_size", 18)
+		vbox.add_child(name_lbl)
+
+		# Calculate breakdown
+		var base_max_hp = member["max_hp"] # This is base from growth/init
+		var hp_bonus = GameManager.get_member_effective_stat(i, "hp", 0)
+		var total_max_hp = base_max_hp + hp_bonus
+
+		var base_dmg = member.get("base_damage", 0)
+		var dmg_bonus = GameManager.get_member_effective_stat(i, "damage", 0)
+		var total_dmg = base_dmg + dmg_bonus
+
+		# XP
+		var current_xp = member["xp"]
+		var next_lvl_stats = GameManager.get_stats_for_level(member["level"])
+		var required_xp = next_lvl_stats.get("exp_required", 99999)
+		var missing_xp = max(0, required_xp - current_xp)
+
+		# Text Output
+		var stats_text = ""
+		stats_text += "HP: " + str(member["hp"]) + " / " + str(total_max_hp) + "\n"
+		stats_text += "   (Base: " + str(base_max_hp) + " + Items: " + str(hp_bonus) + ")\n"
+		stats_text += "Damage: " + str(total_dmg) + "\n"
+		stats_text += "   (Base: " + str(base_dmg) + " + Items: " + str(dmg_bonus) + ")\n"
+		stats_text += "XP: " + str(current_xp) + " / " + str(required_xp) + "\n"
+		stats_text += "   (Next Level in: " + str(missing_xp) + " XP)"
+
+		var info_lbl = Label.new()
+		info_lbl.text = stats_text
+		vbox.add_child(info_lbl)

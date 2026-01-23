@@ -55,7 +55,7 @@ func _init_default_party():
 	gold = 100
 	completed_levels = []
 
-	var base_stats = _get_stats_for_level(1)
+	var base_stats = get_stats_for_level(1)
 
 	for i in range(3):
 		party.append({
@@ -76,7 +76,7 @@ func _init_default_party():
 			}
 		})
 
-func _get_stats_for_level(lvl):
+func get_stats_for_level(lvl):
 	var s_lvl = str(lvl)
 	if growth_database.has(s_lvl):
 		return growth_database[s_lvl]
@@ -154,7 +154,7 @@ func gain_rewards(xp_amount, gold_amount):
 
 func _check_level_up(member):
 	var current_lvl = member["level"]
-	var stats = _get_stats_for_level(current_lvl)
+	var stats = get_stats_for_level(current_lvl)
 	var required = stats.get("exp_required", 100)
 
 	if member["xp"] >= required:
@@ -162,7 +162,7 @@ func _check_level_up(member):
 		member["level"] += 1
 
 		# Update base stats based on NEW level
-		var new_stats = _get_stats_for_level(member["level"])
+		var new_stats = get_stats_for_level(member["level"])
 		member["max_hp"] = new_stats["hp"]
 		member["base_damage"] = new_stats["damage"]
 		member["base_stamina"] = new_stats["stamina"]
