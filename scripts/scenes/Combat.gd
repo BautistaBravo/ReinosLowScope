@@ -4,9 +4,10 @@ extends Control
 const BASE_STAMINA_COST = 5
 const AI_ACTION_COST = 30.0
 const INPUT_COOLDOWN = 0.5
+const START_COMBAT_DELAY = 2.0
 
 # State
-var is_combat_active = true
+var is_combat_active = false # Changed to false initially
 var is_targeting_mode = false
 
 # Player State (Hero 1)
@@ -44,16 +45,24 @@ func _ready():
 	party_debuffs = []
 	for i in range(GameManager.party.size()):
 		party_stamina.append(party_max_stamina[i])
-		party_debuffs.append([]) # Init debuff list for each member
+		party_debuffs.append([])
 
 	player_stamina = party_stamina[0]
 	input_buffer = []
 	is_targeting_mode = false
 	input_cooldown_timer = 0.0
+	is_combat_active = false
 
 	_build_ui()
 	_load_party()
 	_load_enemies()
+
+	# Start delay sequence
+	log_label.text = "Get Ready..."
+	await get_tree().create_timer(START_COMBAT_DELAY).timeout
+
+	is_combat_active = true
+	log_label.text = "Battle Started!"
 
 func _calculate_party_stats():
 	party_max_stamina = []
@@ -109,7 +118,7 @@ func _build_ui():
 	battle_ground.add_child(enemy_container)
 
 	log_label = Label.new()
-	log_label.text = "Battle Started!"
+	log_label.text = "Initializing..." # Initial placeholder
 	root.add_child(log_label)
 
 func _load_party():
