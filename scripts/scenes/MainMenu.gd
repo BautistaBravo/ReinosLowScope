@@ -21,6 +21,11 @@ func _ready():
 	btn_new.pressed.connect(_on_new_game_pressed)
 	vbox.add_child(btn_new)
 
+	var btn_anim = Button.new()
+	btn_anim.text = "New Game Animated"
+	btn_anim.pressed.connect(_on_new_game_animated_pressed)
+	vbox.add_child(btn_anim)
+
 	var btn_load = Button.new()
 	btn_load.text = "Load Game"
 	btn_load.pressed.connect(_on_load_game_pressed)
@@ -29,6 +34,10 @@ func _ready():
 func _on_new_game_pressed():
 	GameManager.new_game()
 	get_tree().change_scene_to_file("res://scenes/LevelSelector.tscn")
+
+func _on_new_game_animated_pressed():
+	GameManager.new_game()
+	get_tree().change_scene_to_file("res://scenes/LevelSelectorAnimated.tscn")
 
 func _on_load_game_pressed():
 	if GameManager.load_game():

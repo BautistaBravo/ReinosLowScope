@@ -27,19 +27,18 @@ Este documento detalla la estructura de clases, funciones y comportamiento del s
 
 ---
 
-## 2. Datos (Data Driven)
-El juego carga configuración desde archivos JSON en `res://data/`.
+## 2. Escena: LevelSelector (Versión Clásica & Animada)
 
-*   `items.json`: Define items, slots (weapon, helmet, chest, pants, boots), precio y estadísticas.
-*   `enemies.json`: Define atributos de enemigos (hp, daño, speed, gold_reward, xp_reward) y tipo de IA.
-*   `levels.json`: Define composición de enemigos por nivel.
-*   `growth.json`: Define estadísticas base por Nivel.
+### LevelSelectorController (Lógica)
+**Archivo:** `scripts/scenes/LevelSelectorController.gd`
+Este script maneja la lógica de negocio para la selección de niveles, tienda e inventario, desacoplando la lógica de la vista.
+*   **Señales:** Emite eventos como `gold_updated`, `shop_updated`, `inventory_updated` para que la vista (Animated) actualice sus gráficos.
 
----
-
-## 3. Escena: LevelSelector
-**Archivo:** `scripts/scenes/LevelSelector.gd`
-**Descripción:** Hub principal del juego con selección de nivel, tienda e inventario.
+### LevelSelectorAnimated (Vista)
+**Archivo:** `scripts/scenes/LevelSelectorAnimated.gd`
+Construye la interfaz gráfica mediante código (usando `TextureRect`, `PlaceholderTexture2D`) y se conecta al Controller.
+*   **Gráficos:** Usa texturas placeholder para fondos, items y personajes.
+*   **MVC:** Escucha las señales del Controller para repintar la UI sin manejar lógica interna.
 
 ### Comportamiento
 *   Muestra botones para cada nivel.
@@ -48,17 +47,15 @@ El juego carga configuración desde archivos JSON en `res://data/`.
 
 ---
 
-## 4. Escena: Combat
+## 3. Escena: Combat
 **Archivo:** `scripts/scenes/Combat.gd`
 **Descripción:** Sistema de combate ATB con combos, estadísticas dinámicas y compañeros controlados por IA.
 
 ### Mecánicas
 *   **Player (Hero 1):** Controlado por el usuario.
     1.  **Input Combo:** Introduce secuencia Q/W/E (3 teclas). Existe un **Cooldown de 0.5s** entre cada input.
-    2.  **Targeting:** Una vez completada la secuencia, se activa el modo de selección.
-        *   **Cursor:** Se mueve con las flechas (**Left/Right**) sobre los enemigos vivos.
-        *   **Confirmar:** Se confirma el objetivo presionando la tecla **0**.
-    3.  **Ejecución:** Al confirmar, se dispara el ataque (Daño/Cura) y se reinicia el combo.
+    2.  **Targeting:** Una vez completada la secuencia, el juego espera a que el jugador **clickee un enemigo**.
+    3.  **Ejecución:** Al clickear, se dispara el ataque (Daño/Cura) y se reinicia el combo.
 *   **Buffs y Debuffs:**
     *   **Bleed (Debuff):** Stackeable. Pierde 1 HP por stack cada segundo. Duración 4s. Aplicado por inputs **Q**.
     *   **Slowed (Debuff):** Reduce regeneración de stamina a la mitad. Duración 5s. Aplicado por inputs **E**.
