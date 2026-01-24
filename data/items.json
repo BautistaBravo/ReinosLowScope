@@ -58,5 +58,40 @@
         "slot": "none",
         "price": 1000,
         "description": "Revives and fully heals all party members immediately."
+    },
+    "goblin_skin": {
+        "name": "Goblin Skin",
+        "slot": "material",
+        "price": 10
+    },
+    "goblin_helm": {
+        "name": "Goblin Helm",
+        "slot": "helmet",
+        "price": 100,
+        "stats": { "hp": 12, "stamina": 5 }
+    },
+    "leather_helm_reinforced": {
+        "name": "Reinforced Leather Helm",
+        "slot": "helmet",
+        "price": 150,
+        "stats": { "hp": 10 }
+    },
+    "iron_helm_reinforced": {
+        "name": "Reinforced Iron Helm",
+        "slot": "helmet",
+        "price": 300,
+        "stats": { "hp": 25 }
+    },
+    "wood_sword_sharp": {
+        "name": "Sharp Wooden Sword",
+        "slot": "weapon",
+        "price": 200,
+        "stats": { "damage": 2 }
+    },
+    "iron_sword_sharp": {
+        "name": "Sharp Iron Sword",
+        "slot": "weapon",
+        "price": 500,
+        "stats": { "damage": 5 }
     }
 }

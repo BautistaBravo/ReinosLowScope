@@ -12,6 +12,7 @@ var levels_container
 var shop_container
 var inventory_container
 var stats_container
+var blacksmith_container
 var log_label
 
 # State
@@ -22,6 +23,10 @@ var combo_overlay: Panel
 var combo_label: Label
 var combo_buffer = []
 var combo_target_hero_idx = -1
+
+# Blacksmith State
+var blacksmith_selected_item = null
+var blacksmith_recipes = {}
 
 func _ready():
 	# 1. Instantiate Controller
@@ -37,6 +42,7 @@ func _ready():
 	controller.levels_updated.connect(_on_levels_updated)
 	controller.game_won.connect(_on_game_won)
 	controller.message_log.connect(_on_message_log)
+	controller.blacksmith_updated.connect(_on_blacksmith_updated)
 
 	# 3. Build Graphic UI (Node structure)
 	_build_visuals()
@@ -81,7 +87,7 @@ func _build_visuals():
 	tabs_container = HBoxContainer.new()
 	main_vbox.add_child(tabs_container)
 
-	var tab_names = ["Levels", "Shop", "Inventory", "Stats"]
+	var tab_names = ["Levels", "Shop", "Inventory", "Stats", "Blacksmith"]
 	for t in tab_names:
 		var btn = Button.new()
 		btn.text = t
@@ -104,6 +110,8 @@ func _build_visuals():
 	inventory_container = VBoxContainer.new()
 
 	stats_container = HBoxContainer.new()
+
+	blacksmith_container = VBoxContainer.new()
 
 	# Default view
 	_on_tab_pressed("Levels")
@@ -176,6 +184,9 @@ func _on_tab_pressed(tab_name):
 		content_area.add_child(inventory_container)
 	elif tab_name == "Stats":
 		content_area.add_child(stats_container)
+	elif tab_name == "Blacksmith":
+		content_area.add_child(blacksmith_container)
+		_refresh_blacksmith_ui()
 
 # --- Signal Callbacks ---
 
@@ -385,3 +396,86 @@ func _on_stats_updated(party_data):
 			for k in current_combo: txt += k.to_upper() + " "
 			combo_lbl.text = txt
 		vbox.add_child(combo_lbl)
+
+func _on_blacksmith_updated(recipes):
+	blacksmith_recipes = recipes
+	_refresh_blacksmith_ui()
+
+func _refresh_blacksmith_ui():
+	for c in blacksmith_container.get_children():
+		c.queue_free()
+
+	var hbox = HBoxContainer.new()
+	blacksmith_container.add_child(hbox)
+
+	# Inventory Column
+	var inv_col = VBoxContainer.new()
+	inv_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hbox.add_child(inv_col)
+
+	var lbl = Label.new()
+	lbl.text = "Select Item to Improve:"
+	inv_col.add_child(lbl)
+
+	var scroll = ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	inv_col.add_child(scroll)
+
+	var list = VBoxContainer.new()
+	scroll.add_child(list)
+
+	for i in range(GameManager.inventory.size()):
+		var item_id = GameManager.inventory[i]
+		var btn = Button.new()
+		btn.text = item_id
+		if item_id == blacksmith_selected_item:
+			btn.modulate = Color.YELLOW
+		btn.pressed.connect(func():
+			blacksmith_selected_item = item_id
+			_refresh_blacksmith_ui()
+		)
+		list.add_child(btn)
+
+	# Upgrade Column
+	var upg_col = VBoxContainer.new()
+	upg_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hbox.add_child(upg_col)
+
+	var lbl2 = Label.new()
+	lbl2.text = "Available Upgrades:"
+	upg_col.add_child(lbl2)
+
+	if blacksmith_selected_item:
+		var found = false
+		for rid in blacksmith_recipes:
+			var r = blacksmith_recipes[rid]
+			if r["base_item"] == blacksmith_selected_item:
+				found = true
+				var panel = PanelContainer.new()
+				upg_col.add_child(panel)
+				var vbox = VBoxContainer.new()
+				panel.add_child(vbox)
+
+				var r_lbl = Label.new()
+				var txt = "Result: " + r["result_item"] + "\nCost: " + str(r.get("gold", 0)) + "g"
+				var mats = r.get("materials", {})
+				for m in mats:
+					txt += "\n- " + m + ": " + str(mats[m])
+				r_lbl.text = txt
+				vbox.add_child(r_lbl)
+
+				var btn = Button.new()
+				btn.text = "Improve"
+				btn.pressed.connect(func():
+					controller.improve_item(blacksmith_selected_item, rid)
+					blacksmith_selected_item = null # Reset selection after attempt
+				)
+				vbox.add_child(btn)
+		if not found:
+			var l = Label.new()
+			l.text = "No upgrades for this item."
+			upg_col.add_child(l)
+	else:
+		var l = Label.new()
+		l.text = "Select an item from the left."
+		upg_col.add_child(l)

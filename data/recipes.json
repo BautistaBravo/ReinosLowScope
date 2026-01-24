@@ -1,0 +1,28 @@
+{
+    "goblin_helm": {
+        "base_item": "leather_helm",
+        "materials": { "goblin_skin": 1 },
+        "gold": 50,
+        "result_item": "goblin_helm"
+    },
+    "leather_helm_reinforced": {
+        "base_item": "leather_helm",
+        "gold": 100,
+        "result_item": "leather_helm_reinforced"
+    },
+    "iron_helm_reinforced": {
+        "base_item": "iron_helm",
+        "gold": 200,
+        "result_item": "iron_helm_reinforced"
+    },
+    "wood_sword_sharp": {
+        "base_item": "wood_sword",
+        "gold": 100,
+        "result_item": "wood_sword_sharp"
+    },
+    "iron_sword_sharp": {
+        "base_item": "iron_sword",
+        "gold": 300,
+        "result_item": "iron_sword_sharp"
+    }
+}

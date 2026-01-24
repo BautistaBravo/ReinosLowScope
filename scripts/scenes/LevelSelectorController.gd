@@ -8,6 +8,7 @@ signal stats_updated(party_data)
 signal levels_updated(completed_levels)
 signal game_won
 signal message_log(text)
+signal blacksmith_updated(recipes_data)
 
 var selected_hero_idx = 0
 
@@ -21,6 +22,7 @@ func refresh_all():
 	emit_signal("shop_updated", GameManager.item_database)
 	emit_signal("inventory_updated", GameManager.inventory, selected_hero_idx)
 	emit_signal("stats_updated", GameManager.party)
+	emit_signal("blacksmith_updated", GameManager.recipe_database)
 	_check_win()
 
 func select_hero(idx):
@@ -57,6 +59,16 @@ func unequip_item(slot):
 	GameManager.unequip_item(selected_hero_idx, slot)
 	emit_signal("inventory_updated", GameManager.inventory, selected_hero_idx)
 	emit_signal("stats_updated", GameManager.party)
+
+func improve_item(base_item, recipe_id):
+	if GameManager.improve_item(base_item, recipe_id):
+		SoundManager.play_sfx("buy")
+		emit_signal("gold_updated", GameManager.gold)
+		emit_signal("inventory_updated", GameManager.inventory, selected_hero_idx)
+		emit_signal("message_log", "Item Improved!")
+	else:
+		SoundManager.play_sfx("click")
+		emit_signal("message_log", "Cannot improve item")
 
 func select_level(lvl):
 	SoundManager.play_sfx("click")

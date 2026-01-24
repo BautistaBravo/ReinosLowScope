@@ -7,6 +7,7 @@ const ITEMS_DATA_PATH = "res://data/items.json"
 const GROWTH_DATA_PATH = "res://data/growth.json"
 const HEROES_DATA_PATH = "res://data/heroes.json"
 const HERO_GROWTH_DATA_PATH = "res://data/hero_growth.json"
+const RECIPES_DATA_PATH = "res://data/recipes.json"
 
 var party = []
 var inventory = []
@@ -20,6 +21,7 @@ var item_database = {}
 var growth_database = {}
 var hero_database = {}
 var hero_growth_database = {}
+var recipe_database = {}
 
 func _ready():
 	_load_static_data()
@@ -60,6 +62,12 @@ func _load_static_data():
 		var json = JSON.new()
 		if json.parse(file.get_as_text()) == OK:
 			hero_growth_database = json.data
+
+	if FileAccess.file_exists(RECIPES_DATA_PATH):
+		var file = FileAccess.open(RECIPES_DATA_PATH, FileAccess.READ)
+		var json = JSON.new()
+		if json.parse(file.get_as_text()) == OK:
+			recipe_database = json.data
 
 func new_game():
 	_init_default_party()
@@ -250,6 +258,37 @@ func buy_item(item_id):
 			inventory.append(item_id)
 			return true
 	return false
+
+func improve_item(base_item_id, recipe_id):
+	if not recipe_database.has(recipe_id): return false
+	var recipe = recipe_database[recipe_id]
+
+	if recipe["base_item"] != base_item_id: return false
+
+	# Check costs
+	var cost_gold = recipe.get("gold", 0)
+	if gold < cost_gold: return false
+
+	var materials = recipe.get("materials", {})
+	for mat in materials:
+		var needed = materials[mat]
+		var count = inventory.count(mat)
+		if count < needed: return false
+
+	# Consume
+	gold -= cost_gold
+	for mat in materials:
+		var needed = materials[mat]
+		for _i in range(needed):
+			inventory.erase(mat)
+
+	# Remove 1 base item
+	inventory.erase(base_item_id)
+
+	# Add result
+	inventory.append(recipe["result_item"])
+	save_game()
+	return true
 
 func equip_item(member_idx, item_id):
 	if member_idx < 0 or member_idx >= party.size(): return

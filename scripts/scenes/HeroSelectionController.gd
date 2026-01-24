@@ -8,33 +8,34 @@ func _ready():
 
 func _generate_options():
 	var all_hero_ids = GameManager.hero_database.keys()
+	var available_ids = []
+
+	# Filter out heroes already in party to ensure uniqueness across roster (optional but good)
+	# And ensure distinct options
+	for id in all_hero_ids:
+		var already_owned = false
+		for member in GameManager.party:
+			if member["id"] == id:
+				already_owned = true
+				break
+		if not already_owned:
+			available_ids.append(id)
+
+	# If we ran out of new heroes, just fallback to all
+	if available_ids.size() < 3:
+		available_ids = all_hero_ids.duplicate()
+
 	var options = []
+	var selected_indices = []
 
-	for i in range(3):
-		var id = all_hero_ids.pick_random()
-		# Simple random, allow duplicates? Prompt doesn't say. Let's try unique.
-		# If roster small, duplicates happen.
-		var hero_def = GameManager.get_hero_data(id)
-		options.append(hero_def)
-
-	# Store keys or full defs? We need to pass data to view.
-	# View needs name, sprite, rarity.
-	# We also need the ID to add to party.
-
-	# Add ID to the dictionary passed to view
-	for i in range(options.size()):
-		# options[i] is a dictionary ref from database? duplicate it
-		var opt = options[i].duplicate()
-		opt["id"] = all_hero_ids[i] # Wait, picking logic was sloppy above.
-		# Let's fix picking
-		pass
-
-	options = []
-	for i in range(3):
-		var id = all_hero_ids.pick_random()
-		var data = GameManager.get_hero_data(id).duplicate()
-		data["id"] = id
-		options.append(data)
+	while options.size() < 3 and options.size() < available_ids.size():
+		var idx = randi() % available_ids.size()
+		if not idx in selected_indices:
+			selected_indices.append(idx)
+			var id = available_ids[idx]
+			var data = GameManager.get_hero_data(id).duplicate()
+			data["id"] = id
+			options.append(data)
 
 	call_deferred("emit_options", options)
 
