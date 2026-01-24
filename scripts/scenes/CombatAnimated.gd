@@ -100,7 +100,10 @@ func _on_party_updated(party_data, party_stamina, party_max_stamina):
 
 		# Sprite
 		var icon = TextureRect.new()
-		icon.texture = _create_placeholder(Color.BLUE)
+		if member.has("sprite") and ResourceLoader.exists(member["sprite"]):
+			icon.texture = load(member["sprite"])
+		else:
+			icon.texture = _create_placeholder(Color.BLUE)
 		icon.custom_minimum_size = Vector2(64, 64)
 		hbox.add_child(icon)
 
@@ -178,4 +181,4 @@ func _on_combat_ended(victory):
 func _create_placeholder(color):
 	var p = PlaceholderTexture2D.new()
 	p.size = Vector2(64, 64)
-	return p # Tint handled by modulate on node usually, or just use white placeholder and modulate node
+	return p

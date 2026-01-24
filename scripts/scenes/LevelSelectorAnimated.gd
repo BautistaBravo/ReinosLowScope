@@ -95,7 +95,7 @@ func _build_visuals():
 func _create_placeholder_icon(color):
 	var p = PlaceholderTexture2D.new()
 	p.size = Vector2(16, 16)
-	return p # Can't tint placeholder easily here without ViewportTexture, relying on Button modulate if needed
+	return p
 
 func _on_tab_pressed(tab_name):
 	# Clear Content
@@ -195,7 +195,13 @@ func _on_inventory_updated(inv_list, hero_idx):
 	for i in range(GameManager.party.size()):
 		var btn = Button.new()
 		# Placeholder Sprite for Hero
-		btn.icon = _create_placeholder_icon(Color.BLUE)
+		# Use real sprite path if possible, else placeholder
+		if GameManager.party[i].has("sprite") and ResourceLoader.exists(GameManager.party[i]["sprite"]):
+			var tex = load(GameManager.party[i]["sprite"])
+			btn.icon = tex
+		else:
+			btn.icon = _create_placeholder_icon(Color.BLUE)
+
 		btn.text = GameManager.party[i]["name"]
 		if i == hero_idx:
 			btn.modulate = Color.YELLOW
@@ -250,7 +256,10 @@ func _on_stats_updated(party_data):
 
 		# Sprite
 		var sprite = TextureRect.new()
-		sprite.texture = _create_placeholder_icon(Color.WHITE)
+		if member.has("sprite") and ResourceLoader.exists(member["sprite"]):
+			sprite.texture = load(member["sprite"])
+		else:
+			sprite.texture = _create_placeholder_icon(Color.WHITE)
 		sprite.custom_minimum_size = Vector2(32, 32)
 		vbox.add_child(sprite)
 

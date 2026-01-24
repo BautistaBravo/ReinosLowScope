@@ -57,9 +57,17 @@ func _init_default_party():
 
 	var base_stats = get_stats_for_level(1)
 
-	for i in range(3):
+	# Define party with specific classes and sprites
+	var classes = [
+		{"name": "Guerrero", "sprite": "res://sprites/warrior.png"},
+		{"name": "Mago", "sprite": "res://sprites/mage.png"},
+		{"name": "Picaro", "sprite": "res://sprites/rogue.png"}
+	]
+
+	for i in range(classes.size()):
 		party.append({
-			"name": "Hero " + str(i+1),
+			"name": classes[i]["name"],
+			"sprite": classes[i]["sprite"],
 			"level": 1,
 			"xp": 0,
 			"hp": base_stats["hp"],
