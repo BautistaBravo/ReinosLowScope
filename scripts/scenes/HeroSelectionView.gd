@@ -42,7 +42,14 @@ func _on_options(heroes):
 		var color = Color.GRAY
 		if h.get("rarity") == "rare": color = Color.BLUE
 		if h.get("rarity") == "epic": color = Color.PURPLE
-		btn.modulate = color
+
+		# Background for Rarity
+		var bg_color = ColorRect.new()
+		bg_color.color = color
+		bg_color.color.a = 0.5 # Semi-transparent
+		bg_color.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		bg_color.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		btn.add_child(bg_color)
 
 		var vbox = VBoxContainer.new()
 		vbox.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
