@@ -506,6 +506,7 @@ func _check_win_condition():
 			total_gold += e.get("gold_reward", 5)
 
 	if all_dead:
+		if not is_combat_active: return # Already finished
 		is_combat_active = false
 		SoundManager.play_sfx("victory")
 		emit_signal("log_message", "Victory! gained " + str(total_xp) + " XP and " + str(total_gold) + " Gold.")
@@ -531,6 +532,7 @@ func _check_loss_condition():
 			all_dead = false
 			break
 	if all_dead:
+		if not is_combat_active: return # Already finished
 		is_combat_active = false
 		SoundManager.play_sfx("click")
 		emit_signal("log_message", "Defeat...")
