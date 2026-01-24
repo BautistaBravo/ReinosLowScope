@@ -14,6 +14,7 @@ const BASE_STAMINA_COST = 5
 const AI_ACTION_COST = 30.0
 const INPUT_COOLDOWN = 0.5
 const START_COMBAT_DELAY = 2.0
+const ACTION_COOLDOWN = 2.0
 
 # State
 var is_combat_active = false
@@ -32,6 +33,7 @@ var party_stamina = []
 var party_max_stamina = []
 var party_stamina_regen = []
 var party_debuffs = []
+var party_action_cooldowns = []
 
 # Enemy State
 var selected_enemy_index = -1
@@ -39,6 +41,7 @@ var target_cursor_index = 0
 var enemies_data = []
 var enemy_atb_gauges = []
 var enemy_debuffs = []
+var enemy_action_cooldowns = []
 
 func _ready():
 	# Don't init here to avoid race condition with View connecting signals
@@ -50,9 +53,11 @@ func init_combat():
 	_calculate_party_stats()
 	party_stamina = []
 	party_debuffs = []
+	party_action_cooldowns = []
 	for i in range(GameManager.party.size()):
 		party_stamina.append(party_max_stamina[i])
 		party_debuffs.append([])
+		party_action_cooldowns.append(0.0)
 
 	controlled_hero_idx = 0
 	_sync_player_stamina()
@@ -66,10 +71,12 @@ func init_combat():
 	enemies_data = GameManager.get_level_data(GameManager.selected_level)
 	enemy_atb_gauges = []
 	enemy_debuffs = []
+	enemy_action_cooldowns = []
 	for e in enemies_data:
 		enemy_atb_gauges.append(0.0)
 		e["last_attacker"] = -1
 		enemy_debuffs.append([])
+		enemy_action_cooldowns.append(0.0)
 
 	emit_signal("log_message", "Get Ready...")
 	emit_signal("party_updated", GameManager.party, party_stamina, party_max_stamina)
@@ -111,6 +118,11 @@ func _process(delta):
 	if input_cooldown_timer > 0:
 		input_cooldown_timer -= delta
 
+	for i in range(party_action_cooldowns.size()):
+		if party_action_cooldowns[i] > 0: party_action_cooldowns[i] -= delta
+	for i in range(enemy_action_cooldowns.size()):
+		if enemy_action_cooldowns[i] > 0: enemy_action_cooldowns[i] -= delta
+
 	_process_debuffs(delta)
 
 	# Regen Party
@@ -129,7 +141,7 @@ func _process(delta):
 				party_changed = true
 
 			# AI Act if NOT controlled
-			if i != controlled_hero_idx and party_stamina[i] >= AI_ACTION_COST:
+			if i != controlled_hero_idx and party_stamina[i] >= AI_ACTION_COST and party_action_cooldowns[i] <= 0:
 				_ai_companion_act(i)
 				party_changed = true
 
@@ -145,8 +157,11 @@ func _process(delta):
 			var speed = enemies_data[i].get("speed", 10.0)
 			enemy_atb_gauges[i] += speed * delta
 			if enemy_atb_gauges[i] >= 100.0:
-				enemy_atb_gauges[i] = 0.0
-				_enemy_attack(i)
+				if enemy_action_cooldowns[i] <= 0:
+					enemy_atb_gauges[i] = 0.0
+					_enemy_attack(i)
+				else:
+					enemy_atb_gauges[i] = 100.0
 
 func _process_debuffs(delta):
 	var update_party = false
@@ -222,6 +237,7 @@ func apply_debuff(is_party, index, type, duration):
 
 func _ai_companion_act(member_idx):
 	party_stamina[member_idx] -= AI_ACTION_COST
+	party_action_cooldowns[member_idx] = ACTION_COOLDOWN
 
 	var member = GameManager.party[member_idx]
 	var combo = member.get("ai_combo", [])
@@ -259,6 +275,7 @@ func _ai_companion_act(member_idx):
 	_check_win_condition()
 
 func _enemy_attack(enemy_idx):
+	enemy_action_cooldowns[enemy_idx] = ACTION_COOLDOWN
 	var ai_type = enemies_data[enemy_idx].get("ai_type", "random")
 	var target_idx = -1
 	var alive_indices = []

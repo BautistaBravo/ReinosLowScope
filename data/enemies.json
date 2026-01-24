@@ -1,6 +1,7 @@
 {
     "slime": {
         "name": "Slime",
+        "sprite": "res://sprites/slime.png",
         "hp": 20,
         "max_hp": 20,
         "damage": 2,
@@ -11,6 +12,7 @@
     },
     "goblin": {
         "name": "Twin Goblin",
+        "sprite": "res://sprites/goblin.png",
         "hp": 40,
         "max_hp": 40,
         "damage": 5,
@@ -21,6 +23,7 @@
     },
     "orc": {
         "name": "Orc",
+        "sprite": "res://sprites/orc.png",
         "hp": 80,
         "max_hp": 80,
         "damage": 10,
@@ -31,6 +34,7 @@
     },
     "skeleton": {
         "name": "Skeleton",
+        "sprite": "res://sprites/skeleton.png",
         "hp": 60,
         "max_hp": 60,
         "damage": 8,
@@ -41,6 +45,7 @@
     },
     "dragon": {
         "name": "Dragon",
+        "sprite": "res://sprites/dragon.png",
         "hp": 200,
         "max_hp": 200,
         "damage": 20,
