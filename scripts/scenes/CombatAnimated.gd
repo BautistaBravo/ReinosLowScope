@@ -6,6 +6,7 @@ var input_label
 var log_label
 var party_container
 var enemy_container
+var background_rect
 
 func _ready():
 	controller = load("res://scripts/scenes/CombatController.gd").new()
@@ -24,14 +25,21 @@ func _ready():
 
 func _build_visuals():
 	# Background
-	var bg = TextureRect.new()
-	bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	var ph = PlaceholderTexture2D.new()
-	ph.size = Vector2(1152, 648)
-	bg.texture = ph
-	bg.modulate = Color(0.2, 0.05, 0.05) # Dark Red for Combat
-	add_child(bg)
+	background_rect = TextureRect.new()
+	background_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	background_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+	# Load Level Background
+	var bg_path = GameManager.get_current_level_background()
+	if bg_path != "" and ResourceLoader.exists(bg_path):
+		background_rect.texture = load(bg_path)
+	else:
+		var ph = PlaceholderTexture2D.new()
+		ph.size = Vector2(1152, 648)
+		background_rect.texture = ph
+		background_rect.modulate = Color(0.2, 0.05, 0.05)
+
+	add_child(background_rect)
 
 	var root = VBoxContainer.new()
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)

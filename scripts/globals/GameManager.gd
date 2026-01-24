@@ -132,7 +132,15 @@ func get_level_data(level_index):
 	var str_index = str(level_index)
 
 	if level_database.has(str_index):
-		var enemy_ids = level_database[str_index]
+		var level_info = level_database[str_index]
+		# Handle object format or old array format (though we standardized to object)
+		var enemy_ids = []
+		if typeof(level_info) == TYPE_DICTIONARY:
+			enemy_ids = level_info.get("enemies", [])
+		else:
+			# Fallback if old format exists
+			enemy_ids = level_info
+
 		for id in enemy_ids:
 			if enemy_database.has(id):
 				enemies.append(enemy_database[id].duplicate(true))
@@ -142,6 +150,14 @@ func get_level_data(level_index):
 		}).duplicate(true))
 
 	return enemies
+
+func get_current_level_background():
+	var str_index = str(selected_level)
+	if level_database.has(str_index):
+		var level_info = level_database[str_index]
+		if typeof(level_info) == TYPE_DICTIONARY:
+			return level_info.get("background", "")
+	return ""
 
 func heal_party(amount):
 	for i in range(party.size()):

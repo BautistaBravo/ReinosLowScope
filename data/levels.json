@@ -1,7 +1,7 @@
 {
-    "1": ["slime", "slime"],
-    "2": ["slime", "goblin"],
-    "3": ["skeleton", "slime"],
-    "4": ["orc", "goblin"],
-    "5": ["dragon"]
+    "1": { "enemies": ["slime", "slime"], "background": "res://sprites/bg_forest.png" },
+    "2": { "enemies": ["slime", "goblin"], "background": "res://sprites/bg_forest.png" },
+    "3": { "enemies": ["skeleton", "slime"], "background": "res://sprites/bg_dungeon.png" },
+    "4": { "enemies": ["orc", "goblin"], "background": "res://sprites/bg_dungeon.png" },
+    "5": { "enemies": ["dragon"], "background": "res://sprites/bg_boss.png" }
 }

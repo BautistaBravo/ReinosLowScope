@@ -4,6 +4,7 @@ extends Control
 var controller
 var content_area
 var tabs_container
+var background_rect
 
 # UI References for updates
 var gold_label
@@ -33,15 +34,20 @@ func _ready():
 
 func _build_visuals():
 	# Background
-	var bg = TextureRect.new()
-	bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	# Placeholder Graphic
-	var placeholder = PlaceholderTexture2D.new()
-	placeholder.size = Vector2(1152, 648)
-	bg.texture = placeholder
-	bg.modulate = Color(0.1, 0.1, 0.2) # Dark Blue BG
-	add_child(bg)
+	background_rect = TextureRect.new()
+	background_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	background_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+	# Load Hub Background
+	if ResourceLoader.exists("res://sprites/bg_hub.png"):
+		background_rect.texture = load("res://sprites/bg_hub.png")
+	else:
+		var placeholder = PlaceholderTexture2D.new()
+		placeholder.size = Vector2(1152, 648)
+		background_rect.texture = placeholder
+		background_rect.modulate = Color(0.1, 0.1, 0.2)
+
+	add_child(background_rect)
 
 	var main_vbox = VBoxContainer.new()
 	main_vbox.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
