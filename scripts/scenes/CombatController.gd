@@ -40,9 +40,10 @@ var enemy_atb_gauges = []
 var enemy_debuffs = []
 
 func _ready():
-	_init_combat()
+	# Don't init here to avoid race condition with View connecting signals
+	pass
 
-func _init_combat():
+func init_combat():
 	SoundManager.play_music("BattleTheme")
 
 	_calculate_party_stats()
