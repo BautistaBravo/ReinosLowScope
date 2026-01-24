@@ -23,6 +23,9 @@ func _ready():
 
 	_build_visuals()
 
+	# Fix: Explicitly initialize combat logic *after* connecting signals
+	controller.init_combat()
+
 func _build_visuals():
 	# Background
 	background_rect = TextureRect.new()
