@@ -73,5 +73,5 @@ func _on_options(heroes):
 		stats_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		vbox.add_child(stats_lbl)
 
-		btn.pressed.connect(func(): controller.select_hero(h))
+		btn.pressed.connect(controller.select_hero.bind(h))
 		container.add_child(btn)

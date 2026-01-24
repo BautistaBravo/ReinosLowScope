@@ -245,7 +245,7 @@ func _on_shop_updated(items_db):
 
 		var btn = Button.new()
 		btn.text = "Buy"
-		btn.pressed.connect(func(): controller.buy_item(id))
+		btn.pressed.connect(controller.buy_item.bind(id))
 		row.add_child(btn)
 
 func _on_inventory_updated(inv_list, hero_idx):
@@ -270,7 +270,7 @@ func _on_inventory_updated(inv_list, hero_idx):
 			btn.modulate = Color.YELLOW
 		else:
 			btn.modulate = Color.WHITE
-		btn.pressed.connect(func(): controller.select_hero(i))
+		btn.pressed.connect(controller.select_hero.bind(i))
 		hero_row.add_child(btn)
 
 	# Equipment Slots
@@ -289,7 +289,7 @@ func _on_inventory_updated(inv_list, hero_idx):
 		else:
 			txt += ": Empty"
 		btn.text = txt
-		btn.pressed.connect(func(): controller.unequip_item(slot))
+		btn.pressed.connect(controller.unequip_item.bind(slot))
 		equip_grid.add_child(btn)
 
 	# Inventory List
@@ -304,7 +304,7 @@ func _on_inventory_updated(inv_list, hero_idx):
 		var btn = Button.new()
 		btn.text = "Equip " + item_id
 		btn.icon = _create_placeholder_icon(Color.MAGENTA)
-		btn.pressed.connect(func(): controller.equip_item(item_id))
+		btn.pressed.connect(controller.equip_item.bind(item_id))
 		list.add_child(btn)
 
 func _on_stats_updated(party_data):

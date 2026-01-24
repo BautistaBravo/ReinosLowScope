@@ -388,7 +388,7 @@ func _update_input_label():
 		var text = "Input: "
 		for k in input_buffer:
 			text += k + " "
-		input_feedback.text = text
+		emit_signal("targeting_mode_changed", false, text)
 
 func _move_cursor(direction):
 	if enemies_data.size() == 0: return
@@ -487,6 +487,7 @@ func _check_win_condition():
 				return
 
 		GameManager.mark_level_complete(GameManager.selected_level)
+		GameManager.save_game()
 
 		await get_tree().create_timer(2.0).timeout
 		emit_signal("combat_ended", true)
