@@ -14,6 +14,12 @@ var inventory_container
 var stats_container
 var log_label
 
+# AI Combo Input Overlay
+var combo_overlay: Panel
+var combo_label: Label
+var combo_buffer = []
+var combo_target_hero_idx = -1
+
 func _ready():
 	# 1. Instantiate Controller
 	controller = load("res://scripts/scenes/LevelSelectorController.gd").new()
@@ -31,6 +37,7 @@ func _ready():
 
 	# 3. Build Graphic UI (Node structure)
 	_build_visuals()
+	_build_combo_overlay()
 
 func _build_visuals():
 	# Background
@@ -97,6 +104,56 @@ func _build_visuals():
 
 	# Default view
 	_on_tab_pressed("Levels")
+
+func _build_combo_overlay():
+	combo_overlay = Panel.new()
+	combo_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	combo_overlay.visible = false
+	add_child(combo_overlay)
+
+	var vbox = VBoxContainer.new()
+	vbox.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	combo_overlay.add_child(vbox)
+
+	var lbl = Label.new()
+	lbl.text = "Press 3 keys (Q, W, E) to set AI Combo:"
+	vbox.add_child(lbl)
+
+	combo_label = Label.new()
+	combo_label.text = "..."
+	combo_label.add_theme_font_size_override("font_size", 24)
+	vbox.add_child(combo_label)
+
+	var cancel = Button.new()
+	cancel.text = "Cancel"
+	cancel.pressed.connect(func(): combo_overlay.visible = false)
+	vbox.add_child(cancel)
+
+func _input(event):
+	if combo_overlay.visible:
+		if event is InputEventKey and event.pressed and not event.echo:
+			var k = ""
+			if event.keycode == KEY_Q: k = "q"
+			elif event.keycode == KEY_W: k = "w"
+			elif event.keycode == KEY_E: k = "e"
+
+			if k != "":
+				combo_buffer.append(k)
+				_update_combo_label()
+				if combo_buffer.size() >= 3:
+					controller.set_ai_combo(combo_target_hero_idx, combo_buffer.duplicate())
+					combo_overlay.visible = false
+
+func _update_combo_label():
+	var txt = ""
+	for k in combo_buffer: txt += k.to_upper() + " "
+	combo_label.text = txt
+
+func _on_set_combo_pressed(hero_idx):
+	combo_target_hero_idx = hero_idx
+	combo_buffer = []
+	_update_combo_label()
+	combo_overlay.visible = true
 
 func _create_placeholder_icon(color):
 	var p = PlaceholderTexture2D.new()
@@ -254,7 +311,8 @@ func _on_stats_updated(party_data):
 	for c in stats_container.get_children():
 		c.queue_free()
 
-	for member in party_data:
+	for i in range(party_data.size()):
+		var member = party_data[i]
 		var panel = PanelContainer.new()
 		stats_container.add_child(panel)
 		var vbox = VBoxContainer.new()
@@ -272,3 +330,19 @@ func _on_stats_updated(party_data):
 		var lbl = Label.new()
 		lbl.text = member["name"] + "\nLevel: " + str(member["level"]) + "\nHP: " + str(member["hp"]) + "/" + str(member["max_hp"])
 		vbox.add_child(lbl)
+
+		# AI Combo UI
+		var combo_btn = Button.new()
+		combo_btn.text = "Set AI Combo"
+		combo_btn.pressed.connect(_on_set_combo_pressed.bind(i))
+		vbox.add_child(combo_btn)
+
+		var combo_lbl = Label.new()
+		var current_combo = member.get("ai_combo", [])
+		if current_combo.is_empty():
+			combo_lbl.text = "AI: Random"
+		else:
+			var txt = "AI: "
+			for k in current_combo: txt += k.to_upper() + " "
+			combo_lbl.text = txt
+		vbox.add_child(combo_lbl)

@@ -28,6 +28,13 @@ func select_hero(idx):
 	selected_hero_idx = idx
 	emit_signal("inventory_updated", GameManager.inventory, selected_hero_idx)
 
+func set_ai_combo(hero_idx, combo):
+	if hero_idx >= 0 and hero_idx < GameManager.party.size():
+		GameManager.party[hero_idx]["ai_combo"] = combo
+		GameManager.save_game()
+		emit_signal("stats_updated", GameManager.party)
+		emit_signal("message_log", "AI Combo Updated")
+
 func buy_item(item_id):
 	if GameManager.buy_item(item_id):
 		SoundManager.play_sfx("buy")

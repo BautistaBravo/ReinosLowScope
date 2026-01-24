@@ -25,6 +25,7 @@ var player_max_stamina = 100.0
 var player_stamina_regen = 1.0
 var input_buffer = []
 var input_cooldown_timer = 0.0
+var controlled_hero_idx = 0 # Default to first member
 
 # Party State
 var party_stamina = []
@@ -53,7 +54,9 @@ func init_combat():
 		party_stamina.append(party_max_stamina[i])
 		party_debuffs.append([])
 
-	player_stamina = party_stamina[0]
+	controlled_hero_idx = 0
+	_sync_player_stamina()
+
 	input_buffer = []
 	is_targeting_mode = false
 	input_cooldown_timer = 0.0
@@ -90,13 +93,16 @@ func _calculate_party_stats():
 		party_max_stamina.append(total_stam)
 		party_stamina_regen.append(total_regen)
 
-	if party_max_stamina.size() > 0:
-		player_max_stamina = party_max_stamina[0]
-		player_stamina_regen = party_stamina_regen[0]
+	_sync_player_stamina()
+
+func _sync_player_stamina():
+	if party_stamina.size() > controlled_hero_idx:
+		player_stamina = party_stamina[controlled_hero_idx]
+		player_max_stamina = party_max_stamina[controlled_hero_idx]
+		player_stamina_regen = party_stamina_regen[controlled_hero_idx]
 	else:
-		# Fail safe if party empty
+		player_stamina = 0
 		player_max_stamina = 100
-		player_stamina_regen = 1.0
 
 func _process(delta):
 	if not is_combat_active:
@@ -122,12 +128,12 @@ func _process(delta):
 			if old_stam != party_stamina[i]:
 				party_changed = true
 
-			if i > 0 and party_stamina[i] >= AI_ACTION_COST:
+			# AI Act if NOT controlled
+			if i != controlled_hero_idx and party_stamina[i] >= AI_ACTION_COST:
 				_ai_companion_act(i)
 				party_changed = true
 
-	if party_stamina.size() > 0:
-		player_stamina = party_stamina[0]
+	_sync_player_stamina()
 
 	if party_changed:
 		emit_signal("player_stamina_updated", player_stamina, player_max_stamina)
@@ -217,39 +223,40 @@ func apply_debuff(is_party, index, type, duration):
 func _ai_companion_act(member_idx):
 	party_stamina[member_idx] -= AI_ACTION_COST
 
-	# Simple AI for now, could be modular later
-	var needs_heal = false
-	for m in GameManager.party:
-		if m["hp"] > 0 and m["hp"] < (m["max_hp"] * 0.5):
-			needs_heal = true
-			break
+	var member = GameManager.party[member_idx]
+	var combo = member.get("ai_combo", [])
 
-	var action = "attack"
-	if needs_heal and randf() < 0.3:
-		action = "heal"
-
-	if action == "heal":
-		var heal_amt = 5
-		GameManager.heal_party(heal_amt)
-		SoundManager.play_sfx("click")
-		emit_signal("log_message", GameManager.party[member_idx]["name"] + " heals party for " + str(heal_amt))
+	# Determine combo to use
+	var keys_to_use = []
+	if combo.size() >= 3:
+		keys_to_use = combo
 	else:
-		var base_dmg = GameManager.party[member_idx].get("base_damage", 2)
-		var total_dmg = GameManager.get_member_effective_stat(member_idx, "damage", base_dmg)
-		var targets = []
-		for e_idx in range(enemies_data.size()):
-			if enemies_data[e_idx]["hp"] > 0: targets.append(e_idx)
+		# Random
+		for k in range(3):
+			var r = randi() % 3
+			if r == 0: keys_to_use.append("q")
+			elif r == 1: keys_to_use.append("w")
+			else: keys_to_use.append("e")
 
-		if targets.size() > 0:
-			var t = targets.pick_random()
-			enemies_data[t]["hp"] -= total_dmg
-			enemies_data[t]["last_attacker"] = member_idx
-			SoundManager.play_sfx("hit")
-			emit_signal("log_message", GameManager.party[member_idx]["name"] + " hits " + enemies_data[t]["name"] + " for " + str(total_dmg))
-			emit_signal("enemy_updated", enemies_data, selected_enemy_index)
-			_check_win_condition()
+	# Execute combo logic
+	var target_idx = -1
+	# Pick random alive enemy
+	var targets = []
+	for e_idx in range(enemies_data.size()):
+		if enemies_data[e_idx]["hp"] > 0: targets.append(e_idx)
+	if targets.size() > 0:
+		target_idx = targets.pick_random()
 
+	var skills = member.get("skills", {})
+
+	for key in keys_to_use:
+		var skill_type = skills.get(key, "damage")
+		_apply_skill_effect(skill_type, member_idx, target_idx)
+
+	emit_signal("log_message", member["name"] + " acts!")
 	emit_signal("party_updated", GameManager.party, party_stamina, party_max_stamina)
+	emit_signal("enemy_updated", enemies_data, selected_enemy_index)
+	_check_win_condition()
 
 func _enemy_attack(enemy_idx):
 	var ai_type = enemies_data[enemy_idx].get("ai_type", "random")
@@ -308,6 +315,36 @@ func _enemy_attack(enemy_idx):
 func handle_input(event):
 	if not is_combat_active: return
 	if event is InputEventKey and event.pressed and not event.echo:
+
+		# Tab Switching
+		if event.keycode == KEY_TAB:
+			# Find next alive member
+			var start = controlled_hero_idx
+			var next = controlled_hero_idx
+			for i in range(GameManager.party.size()):
+				next = (next + 1) % GameManager.party.size()
+				if GameManager.party[next]["hp"] > 0:
+					controlled_hero_idx = next
+					break
+
+			input_buffer = [] # Clear buffer on switch
+			_update_input_label()
+			is_targeting_mode = false
+			_sync_player_stamina()
+			emit_signal("log_message", "Switched to " + GameManager.party[controlled_hero_idx]["name"])
+			emit_signal("player_stamina_updated", player_stamina, player_max_stamina)
+			# Re-emit party update to highlight new selection (handled in View via controlled_hero_idx passed? No, View needs idx)
+			# We'll pass it in signal or View can ask. Let's add it to party_updated signal or create new one?
+			# Easier: overload party_updated logic in view? Or add separate signal?
+			# View listens to 'party_updated', it receives (data, stam, max). We need to pass 'selected_idx'.
+			# Let's emit a specific signal 'hero_selected'.
+			emit_signal("party_updated", GameManager.party, party_stamina, party_max_stamina) # We need to update signal sig?
+			# Actually, I can just repurpose party_updated to include selected index or add a new signal.
+			# Let's add a new signal `active_hero_changed(idx)`
+			# Wait, I can't add signal without updating View.
+			# I'll update party_updated signal signature in next file write.
+			return
+
 		if is_targeting_mode:
 			if event.keycode == KEY_RIGHT: _move_cursor(1)
 			elif event.keycode == KEY_LEFT: _move_cursor(-1)
@@ -317,16 +354,16 @@ func handle_input(event):
 			return
 
 		var key = ""
-		if event.keycode == KEY_Q: key = "q" # Lowercase for matching skills keys
+		if event.keycode == KEY_Q: key = "q"
 		elif event.keycode == KEY_W: key = "w"
 		elif event.keycode == KEY_E: key = "e"
 
 		if key != "":
 			if input_cooldown_timer > 0: return
 
-			# Check player stamina
-			if party_stamina.size() > 0 and party_stamina[0] >= BASE_STAMINA_COST:
-				party_stamina[0] -= BASE_STAMINA_COST
+			# Check controlled hero stamina
+			if party_stamina[controlled_hero_idx] >= BASE_STAMINA_COST:
+				party_stamina[controlled_hero_idx] -= BASE_STAMINA_COST
 				input_buffer.append(key)
 				SoundManager.play_sfx("click")
 				input_cooldown_timer = INPUT_COOLDOWN
@@ -335,7 +372,8 @@ func handle_input(event):
 				for k in input_buffer: txt += k.to_upper() + " "
 				emit_signal("targeting_mode_changed", false, txt)
 
-				emit_signal("player_stamina_updated", party_stamina[0], party_max_stamina[0])
+				_sync_player_stamina()
+				emit_signal("player_stamina_updated", player_stamina, player_max_stamina)
 				emit_signal("party_updated", GameManager.party, party_stamina, party_max_stamina)
 
 				if input_buffer.size() >= 3:
@@ -344,6 +382,13 @@ func handle_input(event):
 					_move_cursor(0)
 			else:
 				emit_signal("log_message", "Not enough stamina!")
+
+func _update_input_label():
+	if not is_targeting_mode:
+		var text = "Input: "
+		for k in input_buffer:
+			text += k + " "
+		input_feedback.text = text
 
 func _move_cursor(direction):
 	if enemies_data.size() == 0: return
@@ -355,7 +400,7 @@ func _move_cursor(direction):
 		if enemies_data[current]["hp"] > 0:
 			SoundManager.play_sfx("click")
 			target_cursor_index = current
-			selected_enemy_index = current # Sync for View highlighting
+			selected_enemy_index = current
 			emit_signal("enemy_updated", enemies_data, selected_enemy_index)
 			return
 
@@ -367,34 +412,28 @@ func _on_enemy_confirmed(index):
 	emit_signal("enemy_updated", enemies_data, selected_enemy_index)
 
 func _execute_combo():
-	var player = GameManager.party[0]
+	var player = GameManager.party[controlled_hero_idx]
 	var skills = player.get("skills", {})
 
-	var log_text = "Combo: "
+	var log_text = player["name"] + " Combo: "
 
-	# Execute each key
 	for key in input_buffer:
-		var skill_type = skills.get(key, "damage") # default to damage if missing
-		_apply_skill_effect(skill_type, 0, selected_enemy_index)
+		var skill_type = skills.get(key, "damage")
+		_apply_skill_effect(skill_type, controlled_hero_idx, selected_enemy_index)
 
-	# Combo bonus? Attack boost logic moved to skill effects
-
-	emit_signal("log_message", "Combo Executed!")
+	emit_signal("log_message", log_text)
 	input_buffer.clear()
 	emit_signal("party_updated", GameManager.party, party_stamina, party_max_stamina)
 	emit_signal("enemy_updated", enemies_data, selected_enemy_index)
 	_check_win_condition()
 
 func _apply_skill_effect(type, user_idx, target_idx):
-	# Calculate base damage
 	var base_dmg = GameManager.party[user_idx].get("base_damage", 2)
 	var dmg_bonus = GameManager.get_member_effective_stat(user_idx, "damage", base_dmg)
 	var dmg_mult = 1.0
 
-	# Check buffs on user
-	if user_idx == 0:
-		for d in party_debuffs[user_idx]:
-			if d["type"] == "attack_boost": dmg_mult += 0.20
+	for d in party_debuffs[user_idx]:
+		if d["type"] == "attack_boost": dmg_mult += 0.20
 
 	var final_dmg = int(dmg_bonus * dmg_mult)
 
@@ -409,22 +448,18 @@ func _apply_skill_effect(type, user_idx, target_idx):
 		_deal_damage_to_enemy(target_idx, final_dmg)
 		apply_debuff(false, target_idx, "slowed", 5.0)
 	elif type == "heal_self":
-		GameManager.heal_party(final_dmg) # Using damage stat for heal power?
-		emit_signal("log_message", "Healed self/party.")
+		GameManager.heal_party(final_dmg)
 	elif type == "heal_party":
 		GameManager.heal_party(final_dmg)
-		emit_signal("log_message", "Healed party.")
 	elif type == "buff_attack":
 		apply_debuff(true, user_idx, "attack_boost", 10.0)
-		# Heal too? Original W did both. Let's make buff_attack purely buff+heal for now based on 'Fairy' prompt
 		GameManager.heal_party(final_dmg)
-		emit_signal("log_message", "Applied Attack Boost.")
 
 func _deal_damage_to_enemy(idx, amount):
 	if idx < 0 or idx >= enemies_data.size(): return
 	if enemies_data[idx]["hp"] > 0:
 		enemies_data[idx]["hp"] -= amount
-		enemies_data[idx]["last_attacker"] = 0 # Player
+		enemies_data[idx]["last_attacker"] = controlled_hero_idx
 		SoundManager.play_sfx("hit")
 
 func _check_win_condition():
@@ -444,18 +479,10 @@ func _check_win_condition():
 		emit_signal("log_message", "Victory! gained " + str(total_xp) + " XP and " + str(total_gold) + " Gold.")
 		GameManager.gain_rewards(total_xp, total_gold)
 
-		# Hero Selection Trigger?
-		# Level 2 (index 2) and Level 4 (index 4) - verify prompt logic
-		# "Hero select window show up after defeating level 2 and 4 for the first time"
-
 		if GameManager.selected_level == 2 or GameManager.selected_level == 4:
-			# Check if already completed? Logic says "for the first time"
-			# GameManager.mark_level_complete checks if it's new.
-			# But we need to interrupt flow.
 			if not (GameManager.selected_level in GameManager.completed_levels):
 				GameManager.mark_level_complete(GameManager.selected_level)
 				await get_tree().create_timer(2.0).timeout
-				# Go to Hero Selection
 				get_tree().change_scene_to_file("res://scenes/HeroSelection.tscn")
 				return
 

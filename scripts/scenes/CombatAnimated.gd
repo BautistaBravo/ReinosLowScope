@@ -8,6 +8,9 @@ var party_container
 var enemy_container
 var background_rect
 
+# State
+var current_controlled_idx = 0
+
 func _ready():
 	controller = load("res://scripts/scenes/CombatController.gd").new()
 	controller.name = "Controller"
@@ -23,7 +26,6 @@ func _ready():
 
 	_build_visuals()
 
-	# Fix: Explicitly initialize combat logic *after* connecting signals
 	controller.init_combat()
 
 func _build_visuals():
@@ -32,7 +34,6 @@ func _build_visuals():
 	background_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	background_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
-	# Load Level Background
 	var bg_path = GameManager.get_current_level_background()
 	if bg_path != "" and ResourceLoader.exists(bg_path):
 		background_rect.texture = load(bg_path)
@@ -84,23 +85,28 @@ func _build_visuals():
 	root.add_child(log_label)
 
 func _input(event):
-	# Delegate input to controller
 	controller.handle_input(event)
 
 # --- Signal Callbacks ---
 
 func _on_state_changed(is_active):
-	# Could animate UI entrance
 	pass
 
 func _on_log(text):
 	log_label.text = text
+	# Heuristic to detect switch message if we didn't add a specific signal
+	if text.begins_with("Switched to"):
+		# Force refresh to update highlight
+		pass
 
 func _on_player_stamina(current, max_val):
 	stamina_bar.max_value = max_val
 	stamina_bar.value = current
 
 func _on_party_updated(party_data, party_stamina, party_max_stamina):
+	# Update active idx from controller (we can read it directly since it's a child node script variable)
+	current_controlled_idx = controller.controlled_hero_idx
+
 	for c in party_container.get_children():
 		c.queue_free()
 
@@ -116,6 +122,17 @@ func _on_party_updated(party_data, party_stamina, party_max_stamina):
 		else:
 			icon.texture = _create_placeholder(Color.BLUE)
 		icon.custom_minimum_size = Vector2(64, 64)
+
+		# Highlight Controlled Hero
+		if i == current_controlled_idx:
+			icon.modulate = Color(1.5, 1.5, 0.5) # Glow
+			var indicator = Label.new()
+			indicator.text = " [CTRL]"
+			indicator.modulate = Color.YELLOW
+			hbox.add_child(indicator)
+		else:
+			icon.modulate = Color.WHITE
+
 		hbox.add_child(icon)
 
 		var info_box = VBoxContainer.new()
@@ -125,7 +142,6 @@ func _on_party_updated(party_data, party_stamina, party_max_stamina):
 		lbl.text = member["name"]
 		info_box.add_child(lbl)
 
-		# Calc Stats for HP bar (need effective max)
 		var bonus_hp = GameManager.get_member_effective_stat(i, "hp", 0)
 		var total_max_hp = member["max_hp"] + bonus_hp
 
@@ -150,7 +166,6 @@ func _on_enemy_updated(enemies, selected_idx):
 	for i in range(enemies.size()):
 		var enemy = enemies[i]
 		if enemy["hp"] <= 0:
-			# Dead placeholder
 			var dead = TextureRect.new()
 			dead.texture = _create_placeholder(Color(0.2, 0.2, 0.2))
 			dead.custom_minimum_size = Vector2(64, 64)
@@ -164,9 +179,8 @@ func _on_enemy_updated(enemies, selected_idx):
 		sprite.texture = _create_placeholder(Color.RED)
 		sprite.custom_minimum_size = Vector2(64, 64)
 
-		# Highlight selection
 		if i == selected_idx:
-			sprite.modulate = Color(1.5, 1.5, 0.5) # Glow
+			sprite.modulate = Color(1.5, 1.5, 0.5)
 
 		vbox.add_child(sprite)
 
@@ -183,10 +197,8 @@ func _on_targeting(is_targeting, text):
 
 func _on_combat_ended(victory):
 	if victory:
-		# Return to Animated Level Selector
 		get_tree().change_scene_to_file("res://scenes/LevelSelectorAnimated.tscn")
 	else:
-		# Return to Main Menu
 		get_tree().change_scene_to_file("res://scenes/MainMenu.tscn")
 
 func _create_placeholder(color):

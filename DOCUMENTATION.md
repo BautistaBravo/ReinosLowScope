@@ -9,25 +9,31 @@ Este documento detalla la estructura de clases, funciones y comportamiento del s
 ---
 
 ## 2. Sistema de Héroes y Selección
-El juego comienza con una party vacía.
-*   **Archivo:** `data/heroes.json`. Define el roster (Guerrero, Hada, Mago, etc.) con sus estadísticas base y habilidades.
-*   **Selección de Héroe:**
-    *   Al iniciar `New Game` y tras vencer los niveles 2 y 4 (si es la primera vez), se muestra la escena `HeroSelection`.
-    *   Muestra 3 opciones aleatorias con sus sprites y rareza (Color de fondo).
-    *   Al elegir, el héroe se une a la party.
+*   **Archivo:** `data/heroes.json`. Define el roster con sus estadísticas y habilidades (Q, W, E).
+*   **Selección:** Al iniciar `New Game` y tras vencer niveles 2 y 4, se eligen héroes.
+
+## 3. Escena: LevelSelector (Animated)
+*   **Stats Tab:** Muestra stats detallados y permite **Configurar Combo AI**.
+    *   **Combo AI:** El jugador puede grabar una secuencia de 3 teclas (Q/W/E) que el héroe usará automáticamente cuando sea controlado por la IA. Por defecto es aleatorio.
 
 ---
 
-## 3. Escena: Combat (Clásica & Animada)
+## 4. Escena: Combat (Animated)
 **Descripción:** Sistema de combate ATB con combos, estadísticas dinámicas y compañeros controlados por IA.
 
 ### Mecánicas
-*   **Player (Hero 1):** Controlado por el usuario.
+*   **Control de Héroe:**
+    *   El jugador controla a un héroe a la vez.
+    *   **TAB:** Alterna el control entre los héroes vivos.
+    *   El héroe controlado se resalta visualmente ("[CTRL]").
+    *   La barra de Stamina principal refleja la del héroe controlado.
+*   **Player (Hero Controlado):**
     1.  **Input Combo:** Secuencia Q/W/E (Cooldown 0.5s).
     2.  **Targeting:** Selección de enemigo con **Flechas** y confirmación con **0**.
-    3.  **Ejecución:** Al confirmar, se dispara la habilidad correspondiente a la tecla.
-*   **Habilidades Modulares:**
-    *   Cada héroe define qué efecto tienen Q, W y E en `heroes.json` (ej: `damage_bleed`, `heal_party`).
-    *   Ya no es fijo (Q=Bleed, W=Heal, E=Slow), sino que depende del héroe líder.
+    3.  **Ejecución:** Se dispara la habilidad mapeada en `heroes.json`.
+*   **Compañeros (AI):**
+    *   Actúan automáticamente cuando su Stamina llega a 30.
+    *   Si tienen un **Combo AI** configurado, ejecutan esa secuencia específica.
+    *   Si no, eligen acciones al azar.
 *   **Buffs y Debuffs:** Bleed, Slowed, Attack Boost.
-*   **Compañeros (AI):** Actúan automáticamente cuando su Stamina llega a 30.
+*   **IA Enemiga:** Random, Twin Attack, Last Attacker, Focus Weak, Aggressive.
