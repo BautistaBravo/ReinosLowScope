@@ -1,0 +1,11 @@
+{
+    "warrior": { "hp": 5, "damage": 2, "stamina": 5, "stamina_regen": 0.1 },
+    "fairy": { "hp": 2, "damage": 1, "stamina": 10, "stamina_regen": 0.2 },
+    "mage": { "hp": 3, "damage": 3, "stamina": 5, "stamina_regen": 0.1 },
+    "bandit": { "hp": 4, "damage": 2, "stamina": 8, "stamina_regen": 0.15 },
+    "assassin": { "hp": 4, "damage": 4, "stamina": 5, "stamina_regen": 0.1 },
+    "ent": { "hp": 8, "damage": 1, "stamina": 5, "stamina_regen": 0.05 },
+    "pixie": { "hp": 2, "damage": 1, "stamina": 15, "stamina_regen": 0.3 },
+    "caster": { "hp": 3, "damage": 2, "stamina": 5, "stamina_regen": 0.1 },
+    "demon_hunter": { "hp": 4, "damage": 3, "stamina": 5, "stamina_regen": 0.15 }
+}

@@ -14,6 +14,9 @@ var inventory_container
 var stats_container
 var log_label
 
+# State
+var current_world_page = 1
+
 # AI Combo Input Overlay
 var combo_overlay: Panel
 var combo_label: Label
@@ -183,9 +186,19 @@ func _on_levels_updated(completed_list):
 	for c in levels_container.get_children():
 		c.queue_free()
 
-	for i in range(1, 6):
+	var start_lvl = 1
+	var end_lvl = 10
+	if current_world_page == 2:
+		start_lvl = 11
+		end_lvl = 20
+
+	for i in range(start_lvl, end_lvl + 1):
 		var btn = Button.new()
-		btn.text = "Level " + str(i)
+		if i > 10:
+			btn.text = "2-" + str(i - 10)
+		else:
+			btn.text = "Level " + str(i)
+
 		btn.icon = _create_placeholder_icon(Color.RED) # Graphic node
 		btn.custom_minimum_size = Vector2(100, 100)
 
@@ -194,6 +207,32 @@ func _on_levels_updated(completed_list):
 
 		btn.pressed.connect(_on_level_selected.bind(i))
 		levels_container.add_child(btn)
+
+	# Navigation buttons
+	if current_world_page == 1:
+		var all_w1_done = true
+		for l in range(1, 11):
+			if not l in completed_list:
+				all_w1_done = false
+				break
+		if all_w1_done:
+			var next_btn = Button.new()
+			next_btn.text = "Next World >>"
+			next_btn.custom_minimum_size = Vector2(200, 50)
+			next_btn.pressed.connect(func():
+				current_world_page = 2
+				_on_levels_updated(completed_list)
+			)
+			levels_container.add_child(next_btn)
+	elif current_world_page == 2:
+		var prev_btn = Button.new()
+		prev_btn.text = "<< Prev World"
+		prev_btn.custom_minimum_size = Vector2(200, 50)
+		prev_btn.pressed.connect(func():
+			current_world_page = 1
+			_on_levels_updated(completed_list)
+		)
+		levels_container.add_child(prev_btn)
 
 	var save_btn = Button.new()
 	save_btn.text = "Save"
@@ -206,7 +245,7 @@ func _on_level_selected(idx):
 
 func _on_game_won():
 	var win = Label.new()
-	win.text = "VICTORY!"
+	win.text = "Ganaste, Muchas gracias por ayudar probando!!!"
 	win.modulate = Color.GREEN
 	win.add_theme_font_size_override("font_size", 40)
 	add_child(win)

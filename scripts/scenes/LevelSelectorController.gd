@@ -70,7 +70,7 @@ func save_game():
 
 func _check_win():
 	var all_done = true
-	for i in range(1, 6):
+	for i in range(1, 21):
 		if not i in GameManager.completed_levels:
 			all_done = false
 			break

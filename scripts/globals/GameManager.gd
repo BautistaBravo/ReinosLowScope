@@ -6,6 +6,7 @@ const LEVELS_DATA_PATH = "res://data/levels.json"
 const ITEMS_DATA_PATH = "res://data/items.json"
 const GROWTH_DATA_PATH = "res://data/growth.json"
 const HEROES_DATA_PATH = "res://data/heroes.json"
+const HERO_GROWTH_DATA_PATH = "res://data/hero_growth.json"
 
 var party = []
 var inventory = []
@@ -18,6 +19,7 @@ var level_database = {}
 var item_database = {}
 var growth_database = {}
 var hero_database = {}
+var hero_growth_database = {}
 
 func _ready():
 	_load_static_data()
@@ -52,6 +54,12 @@ func _load_static_data():
 		var json = JSON.new()
 		if json.parse(file.get_as_text()) == OK:
 			hero_database = json.data
+
+	if FileAccess.file_exists(HERO_GROWTH_DATA_PATH):
+		var file = FileAccess.open(HERO_GROWTH_DATA_PATH, FileAccess.READ)
+		var json = JSON.new()
+		if json.parse(file.get_as_text()) == OK:
+			hero_growth_database = json.data
 
 func new_game():
 	_init_default_party()
@@ -197,28 +205,20 @@ func gain_rewards(xp_amount, gold_amount):
 
 func _check_level_up(idx, member):
 	var current_lvl = member["level"]
-	var stats = get_stats_for_level(current_lvl)
-	var required = stats.get("exp_required", 100)
+	var stats_global = get_stats_for_level(current_lvl)
+	var required = stats_global.get("exp_required", 100)
 
 	if member["xp"] >= required:
 		member["xp"] -= required
 		member["level"] += 1
 
-		# Update stats based on Hero's base stats + Level Multiplier?
-		# Or just use the global growth table but scaled?
-		# Let's keep it simple: Add global growth increment to member base.
-		# Old stat:
-		var old_stats = get_stats_for_level(current_lvl)
-		var new_stats = get_stats_for_level(member["level"])
+		var hero_id = member["id"]
+		var growth = hero_growth_database.get(hero_id, { "hp": 2, "damage": 1, "stamina": 0, "stamina_regen": 0.0 })
 
-		var hp_inc = new_stats["hp"] - old_stats["hp"]
-		var dmg_inc = new_stats["damage"] - old_stats["damage"]
-
-		member["max_hp"] += hp_inc
-		member["base_damage"] += dmg_inc
-		# Stamina/Regen might not scale per level in simple growth.json, but if they did:
-		member["base_stamina"] = new_stats["stamina"] # Assuming fixed curve
-		member["base_stamina_regen"] = new_stats["stamina_regen"]
+		member["max_hp"] += growth.get("hp", 0)
+		member["base_damage"] += growth.get("damage", 0)
+		member["base_stamina"] += growth.get("stamina", 0)
+		member["base_stamina_regen"] += growth.get("stamina_regen", 0.0)
 
 		# Full Heal
 		var effective_max = get_member_effective_stat(idx, "hp", member["max_hp"])

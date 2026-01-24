@@ -26,7 +26,11 @@ func _ready():
 	add_child(label)
 
 	container = HBoxContainer.new()
+	# Center container in the screen
 	container.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	container.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	container.grow_vertical = Control.GROW_DIRECTION_BOTH
+	container.alignment = BoxContainer.ALIGNMENT_CENTER
 	container.add_theme_constant_override("separation", 20)
 	add_child(container)
 
