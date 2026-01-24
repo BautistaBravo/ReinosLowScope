@@ -479,6 +479,21 @@ func _deal_damage_to_enemy(idx, amount):
 		enemies_data[idx]["last_attacker"] = controlled_hero_idx
 		SoundManager.play_sfx("hit")
 
+		if enemies_data[idx]["hp"] <= 0:
+			# Auto-target next alive enemy
+			var start = idx
+			var next = idx
+			var found_next = false
+			for i in range(enemies_data.size()):
+				next = (next + 1) % enemies_data.size()
+				if enemies_data[next]["hp"] > 0:
+					target_cursor_index = next
+					selected_enemy_index = next
+					found_next = true
+					break
+			if found_next:
+				emit_signal("enemy_updated", enemies_data, selected_enemy_index)
+
 func _check_win_condition():
 	var all_dead = true
 	var total_xp = 0

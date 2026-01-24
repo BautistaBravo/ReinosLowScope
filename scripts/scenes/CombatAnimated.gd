@@ -125,7 +125,7 @@ func _on_party_updated(party_data, party_stamina, party_max_stamina):
 
 		# Highlight Controlled Hero
 		if i == current_controlled_idx:
-			icon.modulate = Color(1.5, 1.5, 0.5) # Glow
+			icon.modulate = Color(1.2, 1.2, 1.2) # Subtle Glow
 			var indicator = Label.new()
 			indicator.text = " [CTRL]"
 			indicator.modulate = Color.YELLOW

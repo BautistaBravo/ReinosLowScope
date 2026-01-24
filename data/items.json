@@ -52,5 +52,11 @@
         "slot": "boots",
         "price": 200,
         "stats": { "stamina_regen": 1.0, "stamina": 20 }
+    },
+    "revive_stone": {
+        "name": "Revive Stone",
+        "slot": "none",
+        "price": 1000,
+        "description": "Revives and fully heals all party members immediately."
     }
 }

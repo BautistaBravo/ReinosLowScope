@@ -238,6 +238,15 @@ func buy_item(item_id):
 		var price = item_database[item_id]["price"]
 		if gold >= price:
 			gold -= price
+
+			if item_id == "revive_stone":
+				for i in range(party.size()):
+					var member = party[i]
+					var max_h = get_member_effective_stat(i, "hp", member["max_hp"])
+					member["hp"] = max_h
+				save_game()
+				return true
+
 			inventory.append(item_id)
 			return true
 	return false
