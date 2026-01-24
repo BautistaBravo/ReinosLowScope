@@ -37,16 +37,19 @@ func _ready():
 func _on_new_game_pressed():
 	SoundManager.play_sfx("click")
 	GameManager.new_game()
-	get_tree().change_scene_to_file("res://scenes/LevelSelector.tscn")
+	# Old flow: LevelSelector
+	# New flow: Hero Selection
+	get_tree().change_scene_to_file("res://scenes/HeroSelection.tscn")
 
 func _on_new_game_animated_pressed():
 	SoundManager.play_sfx("click")
 	GameManager.new_game()
-	get_tree().change_scene_to_file("res://scenes/LevelSelectorAnimated.tscn")
+	get_tree().change_scene_to_file("res://scenes/HeroSelection.tscn")
 
 func _on_load_game_pressed():
 	SoundManager.play_sfx("click")
 	if GameManager.load_game():
-		get_tree().change_scene_to_file("res://scenes/LevelSelector.tscn")
+		# Determine where to go? Default to Selector
+		get_tree().change_scene_to_file("res://scenes/LevelSelectorAnimated.tscn")
 	else:
 		print("No save file found!")

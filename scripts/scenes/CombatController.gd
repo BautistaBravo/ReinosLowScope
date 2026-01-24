@@ -89,8 +89,14 @@ func _calculate_party_stats():
 		var total_regen = GameManager.get_member_effective_stat(i, "stamina_regen", base_regen)
 		party_max_stamina.append(total_stam)
 		party_stamina_regen.append(total_regen)
-	player_max_stamina = party_max_stamina[0]
-	player_stamina_regen = party_stamina_regen[0]
+
+	if party_max_stamina.size() > 0:
+		player_max_stamina = party_max_stamina[0]
+		player_stamina_regen = party_stamina_regen[0]
+	else:
+		# Fail safe if party empty
+		player_max_stamina = 100
+		player_stamina_regen = 1.0
 
 func _process(delta):
 	if not is_combat_active:
@@ -120,7 +126,8 @@ func _process(delta):
 				_ai_companion_act(i)
 				party_changed = true
 
-	player_stamina = party_stamina[0]
+	if party_stamina.size() > 0:
+		player_stamina = party_stamina[0]
 
 	if party_changed:
 		emit_signal("player_stamina_updated", player_stamina, player_max_stamina)
@@ -210,6 +217,7 @@ func apply_debuff(is_party, index, type, duration):
 func _ai_companion_act(member_idx):
 	party_stamina[member_idx] -= AI_ACTION_COST
 
+	# Simple AI for now, could be modular later
 	var needs_heal = false
 	for m in GameManager.party:
 		if m["hp"] > 0 and m["hp"] < (m["max_hp"] * 0.5):
@@ -223,7 +231,7 @@ func _ai_companion_act(member_idx):
 	if action == "heal":
 		var heal_amt = 5
 		GameManager.heal_party(heal_amt)
-		SoundManager.play_sfx("click") # Generic magic sound?
+		SoundManager.play_sfx("click")
 		emit_signal("log_message", GameManager.party[member_idx]["name"] + " heals party for " + str(heal_amt))
 	else:
 		var base_dmg = GameManager.party[member_idx].get("base_damage", 2)
@@ -309,20 +317,22 @@ func handle_input(event):
 			return
 
 		var key = ""
-		if event.keycode == KEY_Q: key = "Q"
-		elif event.keycode == KEY_W: key = "W"
-		elif event.keycode == KEY_E: key = "E"
+		if event.keycode == KEY_Q: key = "q" # Lowercase for matching skills keys
+		elif event.keycode == KEY_W: key = "w"
+		elif event.keycode == KEY_E: key = "e"
 
 		if key != "":
 			if input_cooldown_timer > 0: return
-			if party_stamina[0] >= BASE_STAMINA_COST:
+
+			# Check player stamina
+			if party_stamina.size() > 0 and party_stamina[0] >= BASE_STAMINA_COST:
 				party_stamina[0] -= BASE_STAMINA_COST
 				input_buffer.append(key)
 				SoundManager.play_sfx("click")
 				input_cooldown_timer = INPUT_COOLDOWN
 
 				var txt = "Input: "
-				for k in input_buffer: txt += k + " "
+				for k in input_buffer: txt += k.to_upper() + " "
 				emit_signal("targeting_mode_changed", false, txt)
 
 				emit_signal("player_stamina_updated", party_stamina[0], party_max_stamina[0])
@@ -357,50 +367,65 @@ func _on_enemy_confirmed(index):
 	emit_signal("enemy_updated", enemies_data, selected_enemy_index)
 
 func _execute_combo():
-	var q = input_buffer.count("Q")
-	var w = input_buffer.count("W")
-	var e = input_buffer.count("E")
+	var player = GameManager.party[0]
+	var skills = player.get("skills", {})
 
-	var log_text = "Player Combo: "
+	var log_text = "Combo: "
 
-	if w > 0:
-		var heal_base = w * 1
-		GameManager.heal_party(heal_base)
-		log_text += "Heal party " + str(heal_base) + ". "
-		apply_debuff(true, 0, "attack_boost", 10.0)
-		log_text += " Applied Attack Boost."
-		SoundManager.play_sfx("click")
+	# Execute each key
+	for key in input_buffer:
+		var skill_type = skills.get(key, "damage") # default to damage if missing
+		_apply_skill_effect(skill_type, 0, selected_enemy_index)
 
-	var base_dmg_stat = GameManager.party[0].get("base_damage", 2)
-	var dmg_bonus = GameManager.get_member_effective_stat(0, "damage", base_dmg_stat)
-	var combo_dmg = (q * 1) + (e * 2)
-	var total_dmg = combo_dmg + dmg_bonus
+	# Combo bonus? Attack boost logic moved to skill effects
 
-	var dmg_multiplier = 1.0
-	for d in party_debuffs[0]:
-		if d["type"] == "attack_boost": dmg_multiplier += 0.20
-	total_dmg *= dmg_multiplier
-
-	if combo_dmg > 0:
-		if selected_enemy_index != -1 and selected_enemy_index < enemies_data.size() and enemies_data[selected_enemy_index]["hp"] > 0:
-			enemies_data[selected_enemy_index]["hp"] -= total_dmg
-			enemies_data[selected_enemy_index]["last_attacker"] = 0
-			SoundManager.play_sfx("hit")
-			log_text += "Hit enemy for " + str(total_dmg) + "."
-			if q > 0:
-				apply_debuff(false, selected_enemy_index, "bleed", 4.0)
-				log_text += " Applied Bleed."
-			if e > 0:
-				apply_debuff(false, selected_enemy_index, "slowed", 5.0)
-				log_text += " Applied Slowed."
-			_check_win_condition()
-		else:
-			log_text += "Attack missed (no target)!"
-
-	emit_signal("log_message", log_text)
+	emit_signal("log_message", "Combo Executed!")
 	input_buffer.clear()
 	emit_signal("party_updated", GameManager.party, party_stamina, party_max_stamina)
 	emit_signal("enemy_updated", enemies_data, selected_enemy_index)
+	_check_win_condition()
+
+func _apply_skill_effect(type, user_idx, target_idx):
+	# Calculate base damage
+	var base_dmg = GameManager.party[user_idx].get("base_damage", 2)
+	var dmg_bonus = GameManager.get_member_effective_stat(user_idx, "damage", base_dmg)
+	var dmg_mult = 1.0
+
+	# Check buffs on user
+	if user_idx == 0:
+		for d in party_debuffs[user_idx]:
+			if d["type"] == "attack_boost": dmg_mult += 0.20
+
+	var final_dmg = int(dmg_bonus * dmg_mult)
+
+	if type == "damage":
+		_deal_damage_to_enemy(target_idx, final_dmg)
+	elif type == "heavy_damage":
+		_deal_damage_to_enemy(target_idx, final_dmg * 2)
+	elif type == "damage_bleed":
+		_deal_damage_to_enemy(target_idx, final_dmg)
+		apply_debuff(false, target_idx, "bleed", 4.0)
+	elif type == "damage_slow":
+		_deal_damage_to_enemy(target_idx, final_dmg)
+		apply_debuff(false, target_idx, "slowed", 5.0)
+	elif type == "heal_self":
+		GameManager.heal_party(final_dmg) # Using damage stat for heal power?
+		emit_signal("log_message", "Healed self/party.")
+	elif type == "heal_party":
+		GameManager.heal_party(final_dmg)
+		emit_signal("log_message", "Healed party.")
+	elif type == "buff_attack":
+		apply_debuff(true, user_idx, "attack_boost", 10.0)
+		# Heal too? Original W did both. Let's make buff_attack purely buff+heal for now based on 'Fairy' prompt
+		GameManager.heal_party(final_dmg)
+		emit_signal("log_message", "Applied Attack Boost.")
+
+func _deal_damage_to_enemy(idx, amount):
+	if idx < 0 or idx >= enemies_data.size(): return
+	if enemies_data[idx]["hp"] > 0:
+		enemies_data[idx]["hp"] -= amount
+		enemies_data[idx]["last_attacker"] = 0 # Player
+		SoundManager.play_sfx("hit")
 
 func _check_win_condition():
 	var all_dead = true
@@ -418,6 +443,22 @@ func _check_win_condition():
 		SoundManager.play_sfx("victory")
 		emit_signal("log_message", "Victory! gained " + str(total_xp) + " XP and " + str(total_gold) + " Gold.")
 		GameManager.gain_rewards(total_xp, total_gold)
+
+		# Hero Selection Trigger?
+		# Level 2 (index 2) and Level 4 (index 4) - verify prompt logic
+		# "Hero select window show up after defeating level 2 and 4 for the first time"
+
+		if GameManager.selected_level == 2 or GameManager.selected_level == 4:
+			# Check if already completed? Logic says "for the first time"
+			# GameManager.mark_level_complete checks if it's new.
+			# But we need to interrupt flow.
+			if not (GameManager.selected_level in GameManager.completed_levels):
+				GameManager.mark_level_complete(GameManager.selected_level)
+				await get_tree().create_timer(2.0).timeout
+				# Go to Hero Selection
+				get_tree().change_scene_to_file("res://scenes/HeroSelection.tscn")
+				return
+
 		GameManager.mark_level_complete(GameManager.selected_level)
 
 		await get_tree().create_timer(2.0).timeout

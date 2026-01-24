@@ -5,6 +5,7 @@ const ENEMIES_DATA_PATH = "res://data/enemies.json"
 const LEVELS_DATA_PATH = "res://data/levels.json"
 const ITEMS_DATA_PATH = "res://data/items.json"
 const GROWTH_DATA_PATH = "res://data/growth.json"
+const HEROES_DATA_PATH = "res://data/heroes.json"
 
 var party = []
 var inventory = []
@@ -16,6 +17,7 @@ var enemy_database = {}
 var level_database = {}
 var item_database = {}
 var growth_database = {}
+var hero_database = {}
 
 func _ready():
 	_load_static_data()
@@ -45,6 +47,12 @@ func _load_static_data():
 		if json.parse(file.get_as_text()) == OK:
 			growth_database = json.data
 
+	if FileAccess.file_exists(HEROES_DATA_PATH):
+		var file = FileAccess.open(HEROES_DATA_PATH, FileAccess.READ)
+		var json = JSON.new()
+		if json.parse(file.get_as_text()) == OK:
+			hero_database = json.data
+
 func new_game():
 	_init_default_party()
 	save_game()
@@ -54,27 +62,32 @@ func _init_default_party():
 	inventory = []
 	gold = 100
 	completed_levels = []
+	# No default heroes - start empty for Hero Selection
 
-	var base_stats = get_stats_for_level(1)
+func add_hero_to_party(hero_id):
+	if hero_database.has(hero_id):
+		var hero_def = hero_database[hero_id]
+		var base_stats = get_stats_for_level(1)
+		# Or use hero_def["stats"] if different base stats per hero are desired?
+		# Prompt says: "Different heros have different effects... stats (HP/Dmg/Stam/Regen)".
+		# So we should use hero_def stats as base multipliers or overrides.
+		# Let's assume hero_def["stats"] ARE the level 1 stats.
 
-	# Define party with specific classes and sprites
-	var classes = [
-		{"name": "Guerrero", "sprite": "res://sprites/warrior.png"},
-		{"name": "Mago", "sprite": "res://sprites/mage.png"},
-		{"name": "Picaro", "sprite": "res://sprites/rogue.png"}
-	]
+		var stats = hero_def.get("stats", base_stats)
 
-	for i in range(classes.size()):
-		party.append({
-			"name": classes[i]["name"],
-			"sprite": classes[i]["sprite"],
+		var new_hero = {
+			"id": hero_id,
+			"name": hero_def["name"],
+			"sprite": hero_def["sprite"],
+			"rarity": hero_def["rarity"],
 			"level": 1,
 			"xp": 0,
-			"hp": base_stats["hp"],
-			"max_hp": base_stats["hp"],
-			"base_damage": base_stats["damage"],
-			"base_stamina": base_stats["stamina"],
-			"base_stamina_regen": base_stats["stamina_regen"],
+			"hp": stats["hp"],
+			"max_hp": stats["hp"],
+			"base_damage": stats["damage"],
+			"base_stamina": stats["stamina"],
+			"base_stamina_regen": stats["stamina_regen"],
+			"skills": hero_def.get("skills", {}),
 			"equipment": {
 				"weapon": null,
 				"helmet": null,
@@ -82,7 +95,12 @@ func _init_default_party():
 				"pants": null,
 				"boots": null
 			}
-		})
+		}
+		party.append(new_hero)
+		save_game()
+
+func get_hero_data(hero_id):
+	return hero_database.get(hero_id, {})
 
 func get_stats_for_level(lvl):
 	var s_lvl = str(lvl)
@@ -133,12 +151,10 @@ func get_level_data(level_index):
 
 	if level_database.has(str_index):
 		var level_info = level_database[str_index]
-		# Handle object format or old array format (though we standardized to object)
 		var enemy_ids = []
 		if typeof(level_info) == TYPE_DICTIONARY:
 			enemy_ids = level_info.get("enemies", [])
 		else:
-			# Fallback if old format exists
 			enemy_ids = level_info
 
 		for id in enemy_ids:
@@ -188,18 +204,26 @@ func _check_level_up(idx, member):
 		member["xp"] -= required
 		member["level"] += 1
 
-		# Update base stats based on NEW level
+		# Update stats based on Hero's base stats + Level Multiplier?
+		# Or just use the global growth table but scaled?
+		# Let's keep it simple: Add global growth increment to member base.
+		# Old stat:
+		var old_stats = get_stats_for_level(current_lvl)
 		var new_stats = get_stats_for_level(member["level"])
-		member["max_hp"] = new_stats["hp"]
-		member["base_damage"] = new_stats["damage"]
-		member["base_stamina"] = new_stats["stamina"]
+
+		var hp_inc = new_stats["hp"] - old_stats["hp"]
+		var dmg_inc = new_stats["damage"] - old_stats["damage"]
+
+		member["max_hp"] += hp_inc
+		member["base_damage"] += dmg_inc
+		# Stamina/Regen might not scale per level in simple growth.json, but if they did:
+		member["base_stamina"] = new_stats["stamina"] # Assuming fixed curve
 		member["base_stamina_regen"] = new_stats["stamina_regen"]
 
-		# Full Heal to Effective Max HP (Base + Items)
+		# Full Heal
 		var effective_max = get_member_effective_stat(idx, "hp", member["max_hp"])
 		member["hp"] = effective_max
 
-		# Check recursive level up (if XP was massive)
 		_check_level_up(idx, member)
 
 func mark_level_complete(level_idx):

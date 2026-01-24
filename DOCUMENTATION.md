@@ -5,23 +5,16 @@ Este documento detalla la estructura de clases, funciones y comportamiento del s
 ## 1. Global: GameManager & SoundManager
 *   **GameManager:** Singleton de estado (Party, Inventario, Progreso).
 *   **SoundManager:** Singleton de Audio.
-    *   Genera efectos de sonido procedurales (`AudioStreamWAV`) para evitar dependencias externas.
-    *   `play_sfx(name)`: Reproduce 'click', 'hit', 'buy', 'victory', 'win_game'.
-    *   `play_music(name)`: Reproduce música (placeholder/log).
 
 ---
 
-## 2. Modos de Juego (Clásico vs Animado)
-El proyecto soporta dos modos visuales con la misma lógica subyacente.
-
-### Clásico (Prototipo UI)
-*   **Escenas:** `LevelSelector.tscn`, `Combat.tscn`.
-*   **Implementación:** Lógica y Vista acopladas en un solo script GDScript.
-
-### Animado (MVC)
-*   **Escenas:** `LevelSelectorAnimated.tscn`, `CombatAnimated.tscn`.
-*   **Implementación:** Separación en Controlador (`CombatController.gd`) y Vista (`CombatAnimated.gd`).
-*   **Gráficos:** Uso de `TextureRect` y placeholders visuales.
+## 2. Sistema de Héroes y Selección
+El juego comienza con una party vacía.
+*   **Archivo:** `data/heroes.json`. Define el roster (Guerrero, Hada, Mago, etc.) con sus estadísticas base y habilidades.
+*   **Selección de Héroe:**
+    *   Al iniciar `New Game` y tras vencer los niveles 2 y 4 (si es la primera vez), se muestra la escena `HeroSelection`.
+    *   Muestra 3 opciones aleatorias con sus sprites y rareza (Color de fondo).
+    *   Al elegir, el héroe se une a la party.
 
 ---
 
@@ -29,11 +22,12 @@ El proyecto soporta dos modos visuales con la misma lógica subyacente.
 **Descripción:** Sistema de combate ATB con combos, estadísticas dinámicas y compañeros controlados por IA.
 
 ### Mecánicas
-*   **Inicio:** Delay de 2 segundos antes de comenzar.
-*   **Player (Hero 1):**
+*   **Player (Hero 1):** Controlado por el usuario.
     1.  **Input Combo:** Secuencia Q/W/E (Cooldown 0.5s).
     2.  **Targeting:** Selección de enemigo con **Flechas** y confirmación con **0**.
-    3.  **Feedback Sonoro:** Sonidos al confirmar, atacar y recibir daño.
-*   **Buffs y Debuffs:** Bleed (Q), Slowed (E), Attack Boost (W).
-*   **Compañeros (AI):** Actúan automáticamente (Curar/Atacar) cuando su Stamina llega a 30.
-*   **Recompensas:** XP y Oro. Level Up cura totalmente al personaje.
+    3.  **Ejecución:** Al confirmar, se dispara la habilidad correspondiente a la tecla.
+*   **Habilidades Modulares:**
+    *   Cada héroe define qué efecto tienen Q, W y E en `heroes.json` (ej: `damage_bleed`, `heal_party`).
+    *   Ya no es fijo (Q=Bleed, W=Heal, E=Slow), sino que depende del héroe líder.
+*   **Buffs y Debuffs:** Bleed, Slowed, Attack Boost.
+*   **Compañeros (AI):** Actúan automáticamente cuando su Stamina llega a 30.
