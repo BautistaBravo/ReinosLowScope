@@ -5,7 +5,8 @@ signal combat_state_changed(is_active)
 signal log_message(text)
 signal player_stamina_updated(current, max_val)
 signal party_updated(party_data, party_stamina, party_max_stamina)
-signal enemy_updated(enemies_data, selected_idx)
+signal enemy_updated(enemies_data, atb_gauges, selected_idx)
+signal combat_frame_update(party_stamina, enemy_atb)
 signal targeting_mode_changed(is_targeting, combo_ready_text)
 signal combat_ended(victory)
 
@@ -80,7 +81,7 @@ func init_combat():
 
 	emit_signal("log_message", "Get Ready...")
 	emit_signal("party_updated", GameManager.party, party_stamina, party_max_stamina)
-	emit_signal("enemy_updated", enemies_data, selected_enemy_index)
+	emit_signal("enemy_updated", enemies_data, enemy_atb_gauges, selected_enemy_index)
 
 	await get_tree().create_timer(START_COMBAT_DELAY).timeout
 
@@ -147,10 +148,6 @@ func _process(delta):
 
 	_sync_player_stamina()
 
-	if party_changed:
-		emit_signal("player_stamina_updated", player_stamina, player_max_stamina)
-		emit_signal("party_updated", GameManager.party, party_stamina, party_max_stamina)
-
 	# Process Enemies
 	for i in range(enemies_data.size()):
 		if enemies_data[i]["hp"] > 0:
@@ -162,6 +159,13 @@ func _process(delta):
 					_enemy_attack(i)
 				else:
 					enemy_atb_gauges[i] = 100.0
+
+	if party_changed:
+		emit_signal("player_stamina_updated", player_stamina, player_max_stamina)
+		# emit_signal("party_updated", ...) # Removed heavy update from frame loop
+
+	# Light update for gauges
+	emit_signal("combat_frame_update", party_stamina, enemy_atb_gauges)
 
 func _process_debuffs(delta):
 	var update_party = false
@@ -205,7 +209,7 @@ func _process_debuffs(delta):
 		enemy_debuffs[i] = active_list
 
 	if update_enemy:
-		emit_signal("enemy_updated", enemies_data, selected_enemy_index)
+		emit_signal("enemy_updated", enemies_data, enemy_atb_gauges, selected_enemy_index)
 
 func apply_debuff(is_party, index, type, duration):
 	var list_ref = null
@@ -233,7 +237,7 @@ func apply_debuff(is_party, index, type, duration):
 		list_ref.append(new_debuff)
 
 	if not is_party:
-		emit_signal("enemy_updated", enemies_data, selected_enemy_index)
+		emit_signal("enemy_updated", enemies_data, enemy_atb_gauges, selected_enemy_index)
 
 func _ai_companion_act(member_idx):
 	party_stamina[member_idx] -= AI_ACTION_COST
@@ -271,7 +275,7 @@ func _ai_companion_act(member_idx):
 
 	emit_signal("log_message", member["name"] + " acts!")
 	emit_signal("party_updated", GameManager.party, party_stamina, party_max_stamina)
-	emit_signal("enemy_updated", enemies_data, selected_enemy_index)
+	emit_signal("enemy_updated", enemies_data, enemy_atb_gauges, selected_enemy_index)
 	_check_win_condition()
 
 func _enemy_attack(enemy_idx):
@@ -418,7 +422,7 @@ func _move_cursor(direction):
 			SoundManager.play_sfx("click")
 			target_cursor_index = current
 			selected_enemy_index = current
-			emit_signal("enemy_updated", enemies_data, selected_enemy_index)
+			emit_signal("enemy_updated", enemies_data, enemy_atb_gauges, selected_enemy_index)
 			return
 
 func _on_enemy_confirmed(index):
@@ -426,7 +430,7 @@ func _on_enemy_confirmed(index):
 	_execute_combo()
 	is_targeting_mode = false
 	emit_signal("targeting_mode_changed", false, "Input: ")
-	emit_signal("enemy_updated", enemies_data, selected_enemy_index)
+	emit_signal("enemy_updated", enemies_data, enemy_atb_gauges, selected_enemy_index)
 
 func _execute_combo():
 	var player = GameManager.party[controlled_hero_idx]
@@ -441,7 +445,7 @@ func _execute_combo():
 	emit_signal("log_message", log_text)
 	input_buffer.clear()
 	emit_signal("party_updated", GameManager.party, party_stamina, party_max_stamina)
-	emit_signal("enemy_updated", enemies_data, selected_enemy_index)
+	emit_signal("enemy_updated", enemies_data, enemy_atb_gauges, selected_enemy_index)
 	_check_win_condition()
 
 func _apply_skill_effect(type, user_idx, target_idx):
@@ -492,7 +496,7 @@ func _deal_damage_to_enemy(idx, amount):
 					found_next = true
 					break
 			if found_next:
-				emit_signal("enemy_updated", enemies_data, selected_enemy_index)
+				emit_signal("enemy_updated", enemies_data, enemy_atb_gauges, selected_enemy_index)
 
 func _check_win_condition():
 	var all_dead = true

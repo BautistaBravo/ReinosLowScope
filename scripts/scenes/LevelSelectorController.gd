@@ -19,7 +19,20 @@ func _ready():
 func refresh_all():
 	emit_signal("gold_updated", GameManager.gold)
 	emit_signal("levels_updated", GameManager.completed_levels)
-	emit_signal("shop_updated", GameManager.item_database)
+
+	# Filter shop items based on level 10 completion
+	var shop_items = GameManager.item_database.duplicate()
+	var level_10_done = 10 in GameManager.completed_levels
+	if not level_10_done:
+		var filtered = {}
+		for id in shop_items:
+			var item = shop_items[id]
+			# Filter out items > 100g if level 10 not done
+			if item.get("price", 0) <= 100:
+				filtered[id] = item
+		shop_items = filtered
+
+	emit_signal("shop_updated", shop_items)
 	emit_signal("inventory_updated", GameManager.inventory, selected_hero_idx)
 	emit_signal("stats_updated", GameManager.party)
 	emit_signal("blacksmith_updated", GameManager.recipe_database)
