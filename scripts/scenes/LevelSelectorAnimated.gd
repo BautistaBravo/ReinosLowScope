@@ -204,6 +204,16 @@ func _on_levels_updated(completed_list):
 		end_lvl = 20
 
 	for i in range(start_lvl, end_lvl + 1):
+		# Hide level if previous not completed (except first level of world/game)
+		var unlocked = false
+		if i == 1:
+			unlocked = true
+		elif (i - 1) in completed_list:
+			unlocked = true
+
+		if not unlocked:
+			continue
+
 		var btn = Button.new()
 		if i > 10:
 			btn.text = "2-" + str(i - 10)

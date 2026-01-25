@@ -548,7 +548,7 @@ func _check_win_condition():
 		emit_signal("log_message", "Victory! gained " + str(total_xp) + " XP and " + str(total_gold) + " Gold.")
 		GameManager.gain_rewards(total_xp, total_gold)
 
-		if GameManager.selected_level == 2 or GameManager.selected_level == 4:
+		if GameManager.selected_level == 5 or GameManager.selected_level == 9:
 			if not (GameManager.selected_level in GameManager.completed_levels):
 				GameManager.mark_level_complete(GameManager.selected_level)
 				await get_tree().create_timer(2.0).timeout
