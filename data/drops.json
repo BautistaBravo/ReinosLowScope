@@ -1,0 +1,20 @@
+{
+    "slime": [
+        { "item": "revive_stone", "chance": 0.1 }
+    ],
+    "goblin": [
+        { "item": "goblin_skin", "chance": 0.5 },
+        { "item": "wood_sword", "chance": 0.1 }
+    ],
+    "orc": [
+        { "item": "iron_helm", "chance": 0.2 },
+        { "item": "goblin_skin", "chance": 0.1 }
+    ],
+    "skeleton": [
+        { "item": "wood_sword_sharp", "chance": 0.05 }
+    ],
+    "dragon": [
+        { "item": "magic_ring", "chance": 1.0 },
+        { "item": "iron_chest", "chance": 0.5 }
+    ]
+}

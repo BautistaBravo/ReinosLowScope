@@ -8,7 +8,7 @@ signal party_updated(party_data, party_stamina, party_max_stamina)
 signal enemy_updated(enemies_data, atb_gauges, selected_idx)
 signal combat_frame_update(party_stamina, enemy_atb)
 signal targeting_mode_changed(is_targeting, combo_ready_text)
-signal combat_ended(victory)
+signal combat_ended(victory, summary)
 
 # Constants
 const BASE_STAMINA_COST = 5
@@ -545,8 +545,30 @@ func _check_win_condition():
 		if not is_combat_active: return # Already finished
 		is_combat_active = false
 		SoundManager.play_sfx("victory")
+
+		# Drop Calculation
+		var drops = []
+		for e in enemies_data:
+			var e_id = e.get("id", "slime") # Assuming enemy data has ID or we deduce it
+			# Since get_level_data duplicates, we need to ensure ID is preserved or deduce it from name/stats
+			# Actually, I need to pass ID in enemies_data.
+			# Let's mock drops for now or use GameManager helper if we update it.
+			# The prompt says: "items droped from enemies... droptable with percentages on a file"
+			var d = GameManager.get_drops_for_enemy(e.get("name", "").to_lower()) # Fallback to name-based lookup
+			if d: drops.append(d)
+			for item in d:
+				GameManager.inventory.append(item)
+
+		var level_ups = GameManager.gain_rewards(total_xp, total_gold)
+
+		var summary = {
+			"gold": total_gold,
+			"xp": total_xp,
+			"drops": drops, # flattened list of items
+			"level_ups": level_ups
+		}
+
 		emit_signal("log_message", "Victory! gained " + str(total_xp) + " XP and " + str(total_gold) + " Gold.")
-		GameManager.gain_rewards(total_xp, total_gold)
 
 		if GameManager.selected_level == 5 or GameManager.selected_level == 9:
 			if not (GameManager.selected_level in GameManager.completed_levels):
@@ -559,7 +581,7 @@ func _check_win_condition():
 		GameManager.save_game()
 
 		await get_tree().create_timer(2.0).timeout
-		emit_signal("combat_ended", true)
+		emit_signal("combat_ended", true, summary)
 
 func _check_loss_condition():
 	var all_dead = true

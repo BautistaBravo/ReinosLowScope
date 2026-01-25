@@ -13,6 +13,7 @@ var shop_container
 var inventory_container
 var stats_container
 var blacksmith_container
+var sell_container
 var log_label
 
 # State
@@ -87,7 +88,7 @@ func _build_visuals():
 	tabs_container = HBoxContainer.new()
 	main_vbox.add_child(tabs_container)
 
-	var tab_names = ["Levels", "Shop", "Inventory", "Stats", "Blacksmith"]
+	var tab_names = ["Levels", "Shop", "Inventory", "Stats", "Blacksmith", "Sell"]
 	for t in tab_names:
 		var btn = Button.new()
 		btn.text = t
@@ -112,6 +113,8 @@ func _build_visuals():
 	stats_container = HBoxContainer.new()
 
 	blacksmith_container = VBoxContainer.new()
+
+	sell_container = VBoxContainer.new()
 
 	# Default view
 	_on_tab_pressed("Levels")
@@ -187,6 +190,9 @@ func _on_tab_pressed(tab_name):
 	elif tab_name == "Blacksmith":
 		content_area.add_child(blacksmith_container)
 		_refresh_blacksmith_ui()
+	elif tab_name == "Sell":
+		content_area.add_child(sell_container)
+		_refresh_sell_ui()
 
 # --- Signal Callbacks ---
 
@@ -365,6 +371,30 @@ func _on_inventory_updated(inv_list, hero_idx):
 		btn.text = "Equip " + item_id
 		btn.icon = _create_placeholder_icon(Color.MAGENTA)
 		btn.pressed.connect(controller.equip_item.bind(item_id))
+		list.add_child(btn)
+
+	_refresh_sell_ui() # Also refresh sell tab if inventory changes
+
+func _refresh_sell_ui():
+	for c in sell_container.get_children():
+		c.queue_free()
+
+	var lbl = Label.new()
+	lbl.text = "Click items to SELL (50% value)"
+	sell_container.add_child(lbl)
+
+	var scroll = ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	sell_container.add_child(scroll)
+
+	var list = VBoxContainer.new()
+	scroll.add_child(list)
+
+	for i in range(GameManager.inventory.size()):
+		var item_id = GameManager.inventory[i]
+		var btn = Button.new()
+		btn.text = "Sell " + item_id
+		btn.pressed.connect(controller.sell_item.bind(item_id))
 		list.add_child(btn)
 
 func _on_stats_updated(party_data):

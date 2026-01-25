@@ -11,6 +11,7 @@ signal message_log(text)
 signal blacksmith_updated(recipes_data)
 
 var selected_hero_idx = 0
+var current_tab = "Levels"
 
 func _ready():
 	SoundManager.play_music("HubTheme")
@@ -60,6 +61,15 @@ func buy_item(item_id):
 	else:
 		SoundManager.play_sfx("click")
 		emit_signal("message_log", "Not enough gold!")
+
+func sell_item(item_id):
+	if GameManager.sell_item(item_id):
+		SoundManager.play_sfx("buy")
+		emit_signal("gold_updated", GameManager.gold)
+		emit_signal("inventory_updated", GameManager.inventory, selected_hero_idx)
+		emit_signal("message_log", "Sold " + item_id)
+	else:
+		SoundManager.play_sfx("click")
 
 func equip_item(item_id):
 	SoundManager.play_sfx("click")

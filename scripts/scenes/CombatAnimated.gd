@@ -68,9 +68,18 @@ func _build_visuals():
 	top.add_child(input_label)
 
 	# Battle Area
+	var battle_wrapper = Control.new()
+	battle_wrapper.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	root.add_child(battle_wrapper)
+
 	var battle = HBoxContainer.new()
-	battle.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	root.add_child(battle)
+	# Zoom out logic: Scale down and center
+	battle.scale = Vector2(0.5, 0.5)
+	battle.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	# Force a large enough minimum size so it doesn't shrink when scaled
+	battle.custom_minimum_size = Vector2(2000, 1000)
+	battle.alignment = BoxContainer.ALIGNMENT_CENTER
+	battle_wrapper.add_child(battle)
 
 	party_container = VBoxContainer.new()
 	party_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -254,11 +263,45 @@ func _on_targeting(is_targeting, text):
 	else:
 		input_label.modulate = Color.WHITE
 
-func _on_combat_ended(victory):
+func _on_combat_ended(victory, summary_data = {}):
 	if victory:
-		get_tree().change_scene_to_file("res://scenes/LevelSelectorAnimated.tscn")
+		_show_summary(summary_data)
 	else:
 		get_tree().change_scene_to_file("res://scenes/MainMenu.tscn")
+
+func _show_summary(data):
+	var panel = Panel.new()
+	panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(panel)
+
+	var vbox = VBoxContainer.new()
+	vbox.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	panel.add_child(vbox)
+
+	var title = Label.new()
+	title.text = "Victory!"
+	title.add_theme_font_size_override("font_size", 32)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(title)
+
+	var content = Label.new()
+	var txt = "Gold Earned: " + str(data.get("gold", 0)) + "\n"
+	txt += "XP Earned: " + str(data.get("xp", 0)) + "\n"
+	txt += "Items Found:\n"
+	for item in data.get("drops", []):
+		txt += "- " + item + "\n"
+
+	txt += "\nLevel Ups:\n"
+	for name in data.get("level_ups", []):
+		txt += name + " Leveled Up!\n"
+
+	content.text = txt
+	vbox.add_child(content)
+
+	var btn = Button.new()
+	btn.text = "Continue"
+	btn.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/LevelSelectorAnimated.tscn"))
+	vbox.add_child(btn)
 
 func _create_placeholder(color):
 	var p = PlaceholderTexture2D.new()
