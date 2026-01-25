@@ -555,8 +555,8 @@ func _check_win_condition():
 			# Let's mock drops for now or use GameManager helper if we update it.
 			# The prompt says: "items droped from enemies... droptable with percentages on a file"
 			var d = GameManager.get_drops_for_enemy(e.get("name", "").to_lower()) # Fallback to name-based lookup
-			if d: drops.append(d)
 			for item in d:
+				drops.append(item)
 				GameManager.inventory.append(item)
 
 		var level_ups = GameManager.gain_rewards(total_xp, total_gold)
@@ -564,7 +564,7 @@ func _check_win_condition():
 		var summary = {
 			"gold": total_gold,
 			"xp": total_xp,
-			"drops": drops, # flattened list of items
+			"drops": drops,
 			"level_ups": level_ups
 		}
 

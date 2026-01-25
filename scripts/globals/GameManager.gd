@@ -314,6 +314,8 @@ func equip_item(member_idx, item_id):
 	var slot = item_def["slot"]
 	var member = party[member_idx]
 
+	if not member["equipment"].has(slot): return # Slot not compatible
+
 	var current_equipped = member["equipment"][slot]
 
 	if item_id in inventory:

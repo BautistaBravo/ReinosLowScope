@@ -86,6 +86,11 @@ func _build_visuals():
 	party_container.alignment = BoxContainer.ALIGNMENT_CENTER
 	battle.add_child(party_container)
 
+	# Spacer to force separation/center logic
+	var spacer = Control.new()
+	spacer.custom_minimum_size = Vector2(100, 0)
+	battle.add_child(spacer)
+
 	enemy_container = VBoxContainer.new()
 	enemy_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	enemy_container.alignment = BoxContainer.ALIGNMENT_CENTER

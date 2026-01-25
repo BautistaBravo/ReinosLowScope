@@ -370,7 +370,20 @@ func _on_inventory_updated(inv_list, hero_idx):
 		var btn = Button.new()
 		btn.text = "Equip " + item_id
 		btn.icon = _create_placeholder_icon(Color.MAGENTA)
-		btn.pressed.connect(controller.equip_item.bind(item_id))
+
+		# Check if equippable
+		var can_equip = true
+		if GameManager.item_database.has(item_id):
+			var slot = GameManager.item_database[item_id]["slot"]
+			if slot == "material" or slot == "none":
+				can_equip = false
+
+		if can_equip:
+			btn.pressed.connect(controller.equip_item.bind(item_id))
+		else:
+			btn.disabled = true
+			btn.text += " (Not Equippable)"
+
 		list.add_child(btn)
 
 	_refresh_sell_ui() # Also refresh sell tab if inventory changes
@@ -420,6 +433,13 @@ func _on_stats_updated(party_data):
 		var lbl = Label.new()
 		lbl.text = member["name"] + "\nLevel: " + str(member["level"]) + "\nHP: " + str(member["hp"]) + "/" + str(member["max_hp"])
 		vbox.add_child(lbl)
+
+		var details_btn = Button.new()
+		details_btn.text = "Details"
+		details_btn.pressed.connect(func():
+			_show_hero_details(i)
+		)
+		vbox.add_child(details_btn)
 
 		# AI Combo UI
 		var combo_btn = Button.new()
@@ -519,3 +539,40 @@ func _refresh_blacksmith_ui():
 		var l = Label.new()
 		l.text = "Select an item from the left."
 		upg_col.add_child(l)
+
+func _show_hero_details(member_idx):
+	var member = GameManager.party[member_idx]
+
+	var win = Window.new()
+	win.title = member["name"] + " Stats"
+	win.size = Vector2(400, 500)
+	win.exclusive = true
+	add_child(win)
+	win.popup_centered()
+
+	var scroll = ScrollContainer.new()
+	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	win.add_child(scroll)
+
+	var lbl = Label.new()
+	var txt = "Base Stats:\n"
+	txt += "HP: " + str(member["max_hp"]) + "\n"
+	txt += "Damage: " + str(member["base_damage"]) + "\n"
+	txt += "Stamina: " + str(member["base_stamina"]) + "\n"
+	txt += "Regen: " + str(member["base_stamina_regen"]) + "\n\n"
+
+	txt += "Equipment Bonuses:\n"
+	txt += "HP Bonus: " + str(GameManager.get_member_effective_stat(member_idx, "hp", 0)) + "\n"
+	txt += "Dmg Bonus: " + str(GameManager.get_member_effective_stat(member_idx, "damage", 0)) + "\n"
+	txt += "Stam Bonus: " + str(GameManager.get_member_effective_stat(member_idx, "stamina", 0)) + "\n"
+	txt += "Regen Bonus: " + str(GameManager.get_member_effective_stat(member_idx, "stamina_regen", 0)) + "\n\n"
+
+	txt += "Equipment:\n"
+	for slot in member["equipment"]:
+		var item = member["equipment"][slot]
+		txt += slot.capitalize() + ": " + (item if item else "None") + "\n"
+
+	lbl.text = txt
+	scroll.add_child(lbl)
+
+	win.close_requested.connect(func(): win.queue_free())
