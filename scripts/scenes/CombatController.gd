@@ -461,7 +461,8 @@ func _apply_skill_effect(type, user_idx, target_idx):
 	if type == "damage":
 		_deal_damage_to_enemy(target_idx, final_dmg)
 	elif type == "heavy_damage":
-		_deal_damage_to_enemy(target_idx, final_dmg * 2)
+		# Heavy damage now overflows
+		_deal_damage_to_enemy(target_idx, final_dmg * 2, true)
 	elif type == "damage_bleed":
 		_deal_damage_to_enemy(target_idx, final_dmg)
 		apply_debuff(false, target_idx, "bleed", 4.0)
@@ -475,28 +476,59 @@ func _apply_skill_effect(type, user_idx, target_idx):
 	elif type == "buff_attack":
 		apply_debuff(true, user_idx, "attack_boost", 10.0)
 		GameManager.heal_party(final_dmg)
+	elif type == "damage_aoe_all":
+		for i in range(enemies_data.size()):
+			if enemies_data[i]["hp"] > 0:
+				_deal_damage_to_enemy(i, final_dmg)
+	elif type == "damage_cleave":
+		# Target and adjacent
+		var targets = [target_idx]
+		if target_idx - 1 >= 0: targets.append(target_idx - 1)
+		if target_idx + 1 < enemies_data.size(): targets.append(target_idx + 1)
+		for i in targets:
+			if enemies_data[i]["hp"] > 0:
+				_deal_damage_to_enemy(i, final_dmg)
+	elif type == "damage_random":
+		# Spread damage randomly
+		var remaining = final_dmg
+		while remaining > 0:
+			var alive = []
+			for i in range(enemies_data.size()):
+				if enemies_data[i]["hp"] > 0: alive.append(i)
+			if alive.size() == 0: break
 
-func _deal_damage_to_enemy(idx, amount):
+			var hit_idx = alive.pick_random()
+			_deal_damage_to_enemy(hit_idx, 1) # Deal 1 damage per tick
+			remaining -= 1
+
+func _find_next_alive_enemy(start_idx):
+	var next = start_idx
+	for i in range(enemies_data.size()):
+		next = (next + 1) % enemies_data.size()
+		if enemies_data[next]["hp"] > 0:
+			return next
+	return -1
+
+func _deal_damage_to_enemy(idx, amount, allow_overflow = false):
 	if idx < 0 or idx >= enemies_data.size(): return
 	if enemies_data[idx]["hp"] > 0:
-		enemies_data[idx]["hp"] -= amount
+		var dmg_to_deal = min(enemies_data[idx]["hp"], amount)
+		var overflow = amount - dmg_to_deal
+
+		enemies_data[idx]["hp"] -= dmg_to_deal
 		enemies_data[idx]["last_attacker"] = controlled_hero_idx
 		SoundManager.play_sfx("hit")
 
 		if enemies_data[idx]["hp"] <= 0:
-			# Auto-target next alive enemy
-			var start = idx
-			var next = idx
-			var found_next = false
-			for i in range(enemies_data.size()):
-				next = (next + 1) % enemies_data.size()
-				if enemies_data[next]["hp"] > 0:
-					target_cursor_index = next
-					selected_enemy_index = next
-					found_next = true
-					break
-			if found_next:
+			var next = _find_next_alive_enemy(idx)
+			if next != -1:
+				target_cursor_index = next
+				selected_enemy_index = next
 				emit_signal("enemy_updated", enemies_data, enemy_atb_gauges, selected_enemy_index)
+
+				if allow_overflow and overflow > 0:
+					emit_signal("log_message", "Damage Overflows!")
+					_deal_damage_to_enemy(next, overflow, true)
 
 func _check_win_condition():
 	var all_dead = true

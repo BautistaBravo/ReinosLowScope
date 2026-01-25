@@ -12,12 +12,12 @@
     "mage": {
         "name": "Mage", "rarity": "common", "sprite": "res://sprites/mage.png",
         "stats": { "hp": 18, "damage": 4, "stamina": 90, "stamina_regen": 1.2 },
-        "skills": { "q": "damage", "w": "buff_attack", "e": "damage_slow" }
+        "skills": { "q": "damage", "w": "buff_attack", "e": "damage_aoe_all" }
     },
     "bandit": {
         "name": "Bandit", "rarity": "common", "sprite": "res://sprites/bandit.png",
         "stats": { "hp": 20, "damage": 3, "stamina": 110, "stamina_regen": 1.1 },
-        "skills": { "q": "damage", "w": "damage", "e": "damage_bleed" }
+        "skills": { "q": "damage", "w": "damage", "e": "damage_random" }
     },
     "assassin": {
         "name": "Assassin", "rarity": "epic", "sprite": "res://sprites/assassin.png",
@@ -27,7 +27,7 @@
     "ent": {
         "name": "Ent", "rarity": "rare", "sprite": "res://sprites/ent.png",
         "stats": { "hp": 40, "damage": 2, "stamina": 80, "stamina_regen": 0.8 },
-        "skills": { "q": "damage_slow", "w": "heal_self", "e": "damage" }
+        "skills": { "q": "damage_cleave", "w": "heal_self", "e": "damage" }
     },
     "pixie": {
         "name": "Pixie", "rarity": "epic", "sprite": "res://sprites/pixie.png",
