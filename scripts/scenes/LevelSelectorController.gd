@@ -29,7 +29,7 @@ func refresh_all():
 		for id in shop_items:
 			var item = shop_items[id]
 			# Filter out items > 100g if level 10 not done
-			if item.get("price", 0) <= 100:
+			if item.get("tier", 0) <= 1:
 				filtered[id] = item
 		shop_items = filtered
 
