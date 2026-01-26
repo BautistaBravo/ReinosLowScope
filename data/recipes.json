@@ -24,5 +24,11 @@
         "base_item": "iron_sword",
         "gold": 300,
         "result_item": "iron_sword_sharp"
-    }
+    },
+    "goblin_sword": {
+        "base_item": "wood_sword",
+        "materials": { "goblin_tooth": 3 }
+        "gold": 10,
+        "result_item": "goblin_sword"
+    },
 }
