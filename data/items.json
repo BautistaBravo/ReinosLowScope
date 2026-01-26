@@ -75,6 +75,12 @@
         "price": 10,
         "tier": 5
     },
+    "goblin_tooth": {
+        "name": "Goblin Tooth",
+        "slot": "material",
+        "price": 20,
+        "tier": 5
+    },
     "goblin_helm": {
         "name": "Goblin Helm",
         "slot": "helmet",
