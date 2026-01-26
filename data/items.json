@@ -136,11 +136,46 @@
         "stats": { "damage": 8, "stamina": -32.0 },
         "tier": 5
     },
-        "orcish_axe": {
+    "orcish_axe": {
         "name": "Orcish Axe",
         "slot": "weapon",
         "price": 2550,
         "stats": { "damage": 15, "stamina": -22.0 },
+        "tier": 5
+    },
+    "orcish_axe_deadly": {
+        "name": "Orcish Axe Deadly",
+        "slot": "weapon",
+        "price": 5550,
+        "stats": { "damage": 25, "stamina": -32.0 },
+        "tier": 5
+    },
+    "dragon_helm": {
+        "name": "Dragon Helm",
+        "slot": "helmet",
+        "price": 3300,
+        "stats": { "hp": 35 },
+        "tier": 5
+    },
+    "dragon_cuirass": {
+        "name": "Dragon Cuirass",
+        "slot": "chest",
+        "price": 3900,
+        "stats": { "hp": 75 },
+        "tier": 5
+    },
+    "dragon_leggings": {
+        "name": "Dragon Leggings",
+        "slot": "pants",
+        "price": 3600,
+        "stats": { "hp": 30, "stamina":15 },
+        "tier": 5
+    },
+    "dragon_boots": {
+        "name": "Dragon Boots",
+        "slot": "boots",
+        "price": 3600,
+        "stats": { "hp":10, "stamina_regen": 3.0, "stamina": 40 },
         "tier": 5
     },
 }
