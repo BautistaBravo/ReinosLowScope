@@ -7,7 +7,7 @@
     "fairy": {
         "name": "Fairy", "rarity": "rare", "sprite": "res://sprites/fairy.png",
         "stats": { "hp": 15, "damage": 1, "stamina": 120, "stamina_regen": 1.5 },
-        "skills": { "q": "heal_party", "w": "heal_party", "e": "buff_attack" }
+        "skills": { "q": "heal_party", "w": "damage", "e": "buff_attack" }
     },
     "mage": {
         "name": "Mage", "rarity": "common", "sprite": "res://sprites/mage.png",
@@ -17,17 +17,17 @@
     "bandit": {
         "name": "Bandit", "rarity": "common", "sprite": "res://sprites/bandit.png",
         "stats": { "hp": 20, "damage": 3, "stamina": 110, "stamina_regen": 1.1 },
-        "skills": { "q": "damage", "w": "damage", "e": "damage_random" }
+        "skills": { "q": "damage_bleed", "w": "damage", "e": "damage_random" }
     },
     "assassin": {
         "name": "Assassin", "rarity": "epic", "sprite": "res://sprites/assassin.png",
         "stats": { "hp": 18, "damage": 6, "stamina": 100, "stamina_regen": 1.3 },
-        "skills": { "q": "damage_bleed", "w": "damage_bleed", "e": "heavy_damage" }
+        "skills": { "q": "damage_bleed", "w": "damage", "e": "heavy_damage" }
     },
     "ent": {
         "name": "Ent", "rarity": "rare", "sprite": "res://sprites/ent.png",
         "stats": { "hp": 40, "damage": 2, "stamina": 80, "stamina_regen": 0.8 },
-        "skills": { "q": "damage_cleave", "w": "heal_self", "e": "damage" }
+        "skills": { "q": "damage_cleave", "w": "heal_self", "e": "heavy_damage" }
     },
     "pixie": {
         "name": "Pixie", "rarity": "epic", "sprite": "res://sprites/pixie.png",
@@ -37,7 +37,7 @@
     "caster": {
         "name": "Caster", "rarity": "common", "sprite": "res://sprites/caster.png",
         "stats": { "hp": 20, "damage": 3, "stamina": 100, "stamina_regen": 1.0 },
-        "skills": { "q": "damage", "w": "damage", "e": "damage" }
+        "skills": { "q": "damage", "w": "damage_aoe", "e": "damage_random" }
     },
     "demon_hunter": {
         "name": "Demon Hunter", "rarity": "rare", "sprite": "res://sprites/demon_hunter.png",
