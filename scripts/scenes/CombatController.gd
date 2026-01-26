@@ -465,17 +465,17 @@ func _apply_skill_effect(type, user_idx, target_idx):
 		_deal_damage_to_enemy(target_idx, final_dmg * 2, true)
 	elif type == "damage_bleed":
 		_deal_damage_to_enemy(target_idx, final_dmg)
-		apply_debuff(false, target_idx, "bleed", 4.0)
+		apply_debuff(false, target_idx, "bleed", 6.0)
 	elif type == "damage_slow":
 		_deal_damage_to_enemy(target_idx, final_dmg)
 		apply_debuff(false, target_idx, "slowed", 5.0)
 	elif type == "heal_self":
 		GameManager.heal_party(final_dmg)
 	elif type == "heal_party":
-		GameManager.heal_party(final_dmg)
+		GameManager.heal_party(final_dmg / 2)
 	elif type == "buff_attack":
 		apply_debuff(true, user_idx, "attack_boost", 10.0)
-		GameManager.heal_party(final_dmg)
+		GameManager.heal_party(final_dmg / 2)
 	elif type == "damage_aoe_all":
 		for i in range(enemies_data.size()):
 			if enemies_data[i]["hp"] > 0:
@@ -487,10 +487,10 @@ func _apply_skill_effect(type, user_idx, target_idx):
 		if target_idx + 1 < enemies_data.size(): targets.append(target_idx + 1)
 		for i in targets:
 			if enemies_data[i]["hp"] > 0:
-				_deal_damage_to_enemy(i, final_dmg)
+				_deal_damage_to_enemy(i, final_dmg * 0.8)
 	elif type == "damage_random":
 		# Spread damage randomly
-		var remaining = final_dmg
+		var remaining = final_dmg * 2
 		while remaining > 0:
 			var alive = []
 			for i in range(enemies_data.size()):
