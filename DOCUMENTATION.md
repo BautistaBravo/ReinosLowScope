@@ -28,8 +28,8 @@ Este documento detalla la estructura de clases, funciones y comportamiento del s
     *   El héroe controlado se resalta visualmente ("[CTRL]").
     *   La barra de Stamina principal refleja la del héroe controlado.
 *   **Player (Hero Controlado):**
-    1.  **Input Combo:** Secuencia Q/W/E (Cooldown 0.5s).
-    2.  **Targeting:** Selección de enemigo con **Flechas** y confirmación con **0**.
+    1.  **Input Combo:** Secuencia Q/W/E (Cooldown 0.225s).
+    2.  **Targeting:** Selección de enemigo con **Flechas** (Up, Down) y confirmación con **0**.
     3.  **Ejecución:** Se dispara la habilidad mapeada en `heroes.json`.
 *   **Compañeros (AI):**
     *   Actúan automáticamente cuando su Stamina llega a 30.
