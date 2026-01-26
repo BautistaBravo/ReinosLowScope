@@ -1,12 +1,12 @@
 {
     "1": { "hp": 20, "damage": 2, "stamina": 100, "stamina_regen": 1.0, "exp_required": 100 },
-    "2": { "hp": 25, "damage": 3, "stamina": 110, "stamina_regen": 1.1, "exp_required": 250 },
-    "3": { "hp": 32, "damage": 4, "stamina": 120, "stamina_regen": 1.2, "exp_required": 450 },
-    "4": { "hp": 40, "damage": 5, "stamina": 130, "stamina_regen": 1.3, "exp_required": 700 },
-    "5": { "hp": 50, "damage": 7, "stamina": 140, "stamina_regen": 1.4, "exp_required": 1000 },
-    "6": { "hp": 65, "damage": 9, "stamina": 150, "stamina_regen": 1.5, "exp_required": 1500 },
-    "7": { "hp": 80, "damage": 12, "stamina": 160, "stamina_regen": 1.6, "exp_required": 2200 },
-    "8": { "hp": 100, "damage": 15, "stamina": 170, "stamina_regen": 1.8, "exp_required": 3000 },
-    "9": { "hp": 125, "damage": 18, "stamina": 180, "stamina_regen": 2.0, "exp_required": 4000 },
-    "10": { "hp": 150, "damage": 22, "stamina": 200, "stamina_regen": 2.5, "exp_required": 99999 }
+    "2": { "hp": 25, "damage": 3, "stamina": 110, "stamina_regen": 1.1, "exp_required": 200 },
+    "3": { "hp": 32, "damage": 4, "stamina": 120, "stamina_regen": 1.2, "exp_required": 400 },
+    "4": { "hp": 40, "damage": 5, "stamina": 130, "stamina_regen": 1.3, "exp_required": 800 },
+    "5": { "hp": 50, "damage": 7, "stamina": 140, "stamina_regen": 1.4, "exp_required": 1600 },
+    "6": { "hp": 65, "damage": 9, "stamina": 150, "stamina_regen": 1.5, "exp_required": 3200 },
+    "7": { "hp": 80, "damage": 12, "stamina": 160, "stamina_regen": 1.6, "exp_required": 6400 },
+    "8": { "hp": 100, "damage": 15, "stamina": 170, "stamina_regen": 1.8, "exp_required": 12800 },
+    "9": { "hp": 125, "damage": 18, "stamina": 180, "stamina_regen": 2.0, "exp_required": 25600 },
+    "10": { "hp": 150, "damage": 22, "stamina": 200, "stamina_regen": 2.5, "exp_required": 51200 }
 }
