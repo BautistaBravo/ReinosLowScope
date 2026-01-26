@@ -27,7 +27,7 @@
     "ent": {
         "name": "Ent", "rarity": "rare", "sprite": "res://sprites/ent.png",
         "stats": { "hp": 40, "damage": 2, "stamina": 80, "stamina_regen": 0.8 },
-        "skills": { "q": "damage_cleave", "w": "heal_self", "e": "heavy_damage" }
+        "skills": { "q": "damage_cleave", "w": "root_self", "e": "heavy_damage" }
     },
     "pixie": {
         "name": "Pixie", "rarity": "epic", "sprite": "res://sprites/pixie.png",
