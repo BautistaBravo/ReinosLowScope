@@ -12,7 +12,7 @@ signal combat_ended(victory, summary)
 
 # Constants
 const BASE_STAMINA_COST = 5
-const AI_ACTION_COST = 30.0
+const AI_ACTION_COST = 25.0
 const INPUT_COOLDOWN = 0.225
 const START_COMBAT_DELAY = 2.0
 const ACTION_COOLDOWN = 2.0
@@ -133,7 +133,7 @@ func _process(delta):
 			var multiplier = 1.0
 			for d in party_debuffs[i]:
 				if d["type"] == "slowed":
-					multiplier *= 0.5
+					multiplier *= 0.25
 
 			var old_stam = party_stamina[i]
 			party_stamina[i] = min(party_stamina[i] + (party_stamina_regen[i] * multiplier) * delta, party_max_stamina[i])
@@ -176,7 +176,7 @@ func _process_debuffs(delta):
 			if d["type"] == "bleed":
 				d["tick_timer"] -= delta
 				if d["tick_timer"] <= 0:
-					d["tick_timer"] = 1.0
+					d["tick_timer"] = 0.75
 					var dmg = d["stacks"]
 					GameManager.damage_party_member(i, dmg)
 					emit_signal("log_message", GameManager.party[i]["name"] + " bleeds for " + str(dmg))
@@ -198,7 +198,7 @@ func _process_debuffs(delta):
 			if d["type"] == "bleed":
 				d["tick_timer"] -= delta
 				if d["tick_timer"] <= 0:
-					d["tick_timer"] = 1.0
+					d["tick_timer"] = 0.75
 					var dmg = d["stacks"]
 					enemies_data[i]["hp"] -= dmg
 					emit_signal("log_message", enemies_data[i]["name"] + " bleeds for " + str(dmg))
@@ -233,7 +233,7 @@ func apply_debuff(is_party, index, type, duration):
 		var new_debuff = { "type": type, "duration": duration }
 		if type == "bleed":
 			new_debuff["stacks"] = 1
-			new_debuff["tick_timer"] = 1.0
+			new_debuff["tick_timer"] = 0.75
 		list_ref.append(new_debuff)
 
 	if not is_party:
@@ -326,7 +326,7 @@ func _enemy_attack(enemy_idx):
 
 		if enemies_data[enemy_idx]["name"] == "Skeleton":
 			if randf() < 0.5:
-				apply_debuff(true, target_idx, "bleed", 4.0)
+				apply_debuff(true, target_idx, "bleed", 6.0)
 				emit_signal("log_message", enemies_data[enemy_idx]["name"] + " applies Bleed!")
 
 		emit_signal("log_message", enemies_data[enemy_idx]["name"] + " hits " + GameManager.party[target_idx]["name"] + " for " + str(dmg))
@@ -369,7 +369,9 @@ func handle_input(event):
 		if is_targeting_mode:
 			if event.keycode == KEY_RIGHT: _move_cursor(1)
 			elif event.keycode == KEY_LEFT: _move_cursor(-1)
-			elif event.keycode == KEY_0 or event.keycode == KEY_KP_0:
+			elif event.keycode == KEY_UP: _move_cursor(-1)
+			elif event.keycode == KEY_DOWN: _move_cursor(-1)
+			elif event.keycode == KEY_0 or event.keycode == KEY_KP_0 or event.keycode == KEY_ENTER:
 				if target_cursor_index >= 0 and target_cursor_index < enemies_data.size():
 					_on_enemy_confirmed(target_cursor_index)
 			return
@@ -378,6 +380,29 @@ func handle_input(event):
 		if event.keycode == KEY_Q: key = "q"
 		elif event.keycode == KEY_W: key = "w"
 		elif event.keycode == KEY_E: key = "e"
+		elif event.keycode == KEY_W: key = "r"
+		elif event.keycode == KEY_E: key = "t"
+		elif event.keycode == KEY_W: key = "y"
+		elif event.keycode == KEY_E: key = "u"
+		elif event.keycode == KEY_W: key = "i"
+		elif event.keycode == KEY_E: key = "o"
+		elif event.keycode == KEY_W: key = "p"
+		elif event.keycode == KEY_E: key = "a"
+		elif event.keycode == KEY_W: key = "s"
+		elif event.keycode == KEY_E: key = "d"
+		elif event.keycode == KEY_W: key = "f"
+		elif event.keycode == KEY_E: key = "g"
+		elif event.keycode == KEY_W: key = "h"
+		elif event.keycode == KEY_E: key = "j"
+		elif event.keycode == KEY_W: key = "k"
+		elif event.keycode == KEY_E: key = "l"
+		elif event.keycode == KEY_W: key = "z"
+		elif event.keycode == KEY_E: key = "x"
+		elif event.keycode == KEY_W: key = "c"
+		elif event.keycode == KEY_E: key = "v"
+		elif event.keycode == KEY_W: key = "b"
+		elif event.keycode == KEY_E: key = "n"
+		elif event.keycode == KEY_W: key = "m"
 
 		if key != "":
 			if input_cooldown_timer > 0: return
