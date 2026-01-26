@@ -2,9 +2,9 @@
     "slime": {
         "name": "Slime",
         "sprite": "res://sprites/slime.png",
-        "hp": 20,
-        "max_hp": 20,
-        "damage": 2,
+        "hp": 40,
+        "max_hp": 40,
+        "damage": 4,
         "speed": 10.0,
         "xp_reward": 10,
         "gold_reward": 5,
@@ -13,10 +13,10 @@
     "goblin": {
         "name": "Twin Goblin",
         "sprite": "res://sprites/goblin.png",
-        "hp": 40,
-        "max_hp": 40,
-        "damage": 5,
-        "speed": 15.0,
+        "hp": 60,
+        "max_hp": 60,
+        "damage": 6,
+        "speed": 25.0,
         "xp_reward": 25,
         "gold_reward": 15,
         "ai_type": "twin_attack"
@@ -24,10 +24,10 @@
     "orc": {
         "name": "Orc",
         "sprite": "res://sprites/orc.png",
-        "hp": 80,
-        "max_hp": 80,
-        "damage": 10,
-        "speed": 8.0,
+        "hp": 180,
+        "max_hp": 180,
+        "damage": 14,
+        "speed": 12.0,
         "xp_reward": 50,
         "gold_reward": 40,
         "ai_type": "aggressive"
@@ -35,10 +35,10 @@
     "skeleton": {
         "name": "Skeleton",
         "sprite": "res://sprites/skeleton.png",
-        "hp": 60,
-        "max_hp": 60,
-        "damage": 8,
-        "speed": 12.0,
+        "hp": 160,
+        "max_hp": 160,
+        "damage": 12,
+        "speed": 18.0,
         "xp_reward": 35,
         "gold_reward": 25,
         "ai_type": "last_attacker"
@@ -46,12 +46,23 @@
     "dragon": {
         "name": "Dragon",
         "sprite": "res://sprites/dragon.png",
-        "hp": 200,
-        "max_hp": 200,
-        "damage": 20,
-        "speed": 12.0,
+        "hp": 2100,
+        "max_hp": 2100,
+        "damage": 34,
+        "speed": 15.0,
         "xp_reward": 500,
         "gold_reward": 1000,
-        "ai_type": "boss"
-    }
+        "ai_type": "twin"
+    },
+     "Imp": {
+        "name": "Red Imp",
+        "sprite": "res://sprites/goblin.png",
+        "hp": 240,
+        "max_hp": 240,
+        "damage": 15,
+        "speed": 25.0,
+        "xp_reward": 25,
+        "gold_reward": 15,
+        "ai_type": "twin_attack"
+    },
 }
