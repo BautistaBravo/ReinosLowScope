@@ -31,4 +31,16 @@
         "gold": 10,
         "result_item": "goblin_sword"
     },
+     "orcish_axe": {
+        "base_item": "iron_axe",
+        "materials": { "orcish_stone": 3 }
+        "gold": 700,
+        "result_item": "orcish_axe"
+    },
+    "orcish_axe_deadly": {
+        "base_item": "orcish_axe",
+        "materials": { "orcish_stone": 3 }
+        "gold": 1200,
+        "result_item": "orcish_axe_deadly"
+    },
 }
