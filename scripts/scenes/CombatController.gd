@@ -495,7 +495,7 @@ func _apply_skill_effect(type, user_idx, target_idx):
 		_deal_damage_to_enemy(target_idx, final_dmg)
 		apply_debuff(false, target_idx, "slowed", 5.0)
 	elif type == "heal_self":
-		GameManager.heal_party(final_dmg)
+		GameManager.heal_single(final_dmg)
 	elif type == "heal_party":
 		GameManager.heal_party(final_dmg / 2)
 	elif type == "buff_attack":
