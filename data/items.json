@@ -110,4 +110,11 @@
         "stats": { "damage": 5 },
         "tier": 5
     }
+     "goblin_sword": {
+        "name": "Goblin Sword",
+        "slot": "weapon",
+        "price": 150,
+        "stats": { "damage": 5, "stamina_regen": 2.0 },
+        "tier": 5
+    },
 }
