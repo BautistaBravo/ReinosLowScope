@@ -201,21 +201,14 @@ func get_current_level_background():
 
 func heal_party(amount):
 	for i in range(party.size()):
-		var member = party[i]
-		if member["hp"] > 0:
-			var max_h = get_member_effective_stat(i, "hp", member["max_hp"])
-			member["hp"] = min(member["hp"] + amount, max_h)
+		heal_member(i, amount)
 
-func heal_single(i, amount):
-		var member = party[i]
+func heal_member(index, amount):
+	if index >= 0 and index < party.size():
+		var member = party[index]
 		if member["hp"] > 0:
-			var max_h = get_member_effective_stat(i, "hp", member["max_hp"])
+			var max_h = get_member_effective_stat(index, "hp", member["max_hp"])
 			member["hp"] = min(member["hp"] + amount, max_h)
-
-func recover_stam_single(i, amount):
-		var member = party[i]
-			var max_stam = get_member_effective_stat(i, "stamina", member["max_stam"])
-			member["stamina"] = min(member["stamina"] + amount, max_stam)
 
 func damage_party_member(index, amount):
 	if index >= 0 and index < party.size():

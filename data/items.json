@@ -3,179 +3,95 @@
         "name": "Wooden Sword",
         "slot": "weapon",
         "price": 50,
-        "stats": { "damage": 2 },
-        "tier": 1
+        "stats": { "damage": 1 }
     },
     "iron_sword": {
         "name": "Iron Sword",
         "slot": "weapon",
         "price": 150,
-        "stats": { "damage": 5 },
-        "tier": 1
+        "stats": { "damage": 3 }
     },
     "leather_helm": {
         "name": "Leather Helm",
         "slot": "helmet",
         "price": 30,
-        "stats": { "hp": 5 },
-        "tier": 1
+        "stats": { "hp": 5 }
     },
     "iron_helm": {
         "name": "Iron Helm",
         "slot": "helmet",
         "price": 80,
-        "stats": { "hp": 15 },
-        "tier": 1
+        "stats": { "hp": 15 }
     },
     "leather_chest": {
         "name": "Leather Chest",
         "slot": "chest",
         "price": 60,
-        "stats": { "hp": 10 },
-        "tier": 1
+        "stats": { "hp": 10 }
     },
     "iron_chest": {
         "name": "Iron Chest",
         "slot": "chest",
         "price": 120,
-        "stats": { "hp": 35 ,"stamina": -5},
-        "tier": 1
+        "stats": { "hp": 25 }
     },
     "cloth_pants": {
         "name": "Cloth Pants",
         "slot": "pants",
         "price": 20,
-        "stats": { "stamina": 10 },
-        "tier": 1
+        "stats": { "stamina": 10 }
     },
     "leather_boots": {
         "name": "Leather Boots",
         "slot": "boots",
         "price": 40,
-        "stats": { "stamina_regen": 0.5 },
-        "tier": 1
+        "stats": { "stamina_regen": 0.5 }
     },
     "magic_ring": {
         "name": "Stamina Ring",
         "slot": "boots",
         "price": 200,
-        "stats": { "stamina_regen": 1.0, "stamina": 20 },
-        "tier": 1
+        "stats": { "stamina_regen": 1.0, "stamina": 20 }
     },
     "revive_stone": {
         "name": "Revive Stone",
         "slot": "none",
         "price": 1000,
-        "tier": 1,
         "description": "Revives and fully heals all party members immediately."
     },
     "goblin_skin": {
         "name": "Goblin Skin",
         "slot": "material",
-        "price": 10,
-        "tier": 5
-    },
-    "goblin_tooth": {
-        "name": "Goblin Tooth",
-        "slot": "material",
-        "price": 20,
-        "tier": 5
-    },
-    "orcish_stone": {
-        "name": "Orcish Stone",
-        "slot": "material",
-        "price": 150,
-        "tier": 5
+        "price": 10
     },
     "goblin_helm": {
         "name": "Goblin Helm",
         "slot": "helmet",
         "price": 100,
-        "stats": { "hp": 12, "stamina": 5 },
-        "tier": 4
+        "stats": { "hp": 12, "stamina": 5 }
     },
     "leather_helm_reinforced": {
         "name": "Reinforced Leather Helm",
         "slot": "helmet",
         "price": 150,
-        "stats": { "hp": 10 },
-        "tier": 5
+        "stats": { "hp": 10 }
     },
     "iron_helm_reinforced": {
         "name": "Reinforced Iron Helm",
         "slot": "helmet",
         "price": 300,
-        "stats": { "hp": 25 },
-        "tier": 5
+        "stats": { "hp": 25 }
     },
     "wood_sword_sharp": {
         "name": "Sharp Wooden Sword",
         "slot": "weapon",
         "price": 200,
-        "stats": { "damage": 2 },
-        "tier": 5
+        "stats": { "damage": 2 }
     },
     "iron_sword_sharp": {
         "name": "Sharp Iron Sword",
         "slot": "weapon",
         "price": 500,
-        "stats": { "damage": 5 },
-        "tier": 5
+        "stats": { "damage": 5 }
     }
-     "goblin_sword": {
-        "name": "Goblin Sword",
-        "slot": "weapon",
-        "price": 150,
-        "stats": { "damage": 5, "stamina_regen": 2.0 },
-        "tier": 5
-    },
-     "iron_axe": {
-        "name": "Iron Axe",
-        "slot": "weapon",
-        "price": 550,
-        "stats": { "damage": 8, "stamina": -32.0 },
-        "tier": 5
-    },
-    "orcish_axe": {
-        "name": "Orcish Axe",
-        "slot": "weapon",
-        "price": 2550,
-        "stats": { "damage": 15, "stamina": -22.0 },
-        "tier": 5
-    },
-    "orcish_axe_deadly": {
-        "name": "Orcish Axe Deadly",
-        "slot": "weapon",
-        "price": 5550,
-        "stats": { "damage": 25, "stamina": -32.0 },
-        "tier": 5
-    },
-    "dragon_helm": {
-        "name": "Dragon Helm",
-        "slot": "helmet",
-        "price": 3300,
-        "stats": { "hp": 35 },
-        "tier": 5
-    },
-    "dragon_cuirass": {
-        "name": "Dragon Cuirass",
-        "slot": "chest",
-        "price": 3900,
-        "stats": { "hp": 75 },
-        "tier": 5
-    },
-    "dragon_leggings": {
-        "name": "Dragon Leggings",
-        "slot": "pants",
-        "price": 3600,
-        "stats": { "hp": 30, "stamina":15 },
-        "tier": 5
-    },
-    "dragon_boots": {
-        "name": "Dragon Boots",
-        "slot": "boots",
-        "price": 3600,
-        "stats": { "hp":10, "stamina_regen": 3.0, "stamina": 40 },
-        "tier": 5
-    },
 }

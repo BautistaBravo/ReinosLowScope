@@ -1,17 +1,14 @@
 {
     "slime": [
-        { "item": "revive_stone", "chance": 0.01 }
+        { "item": "revive_stone", "chance": 0.1 }
     ],
     "goblin": [
-        { "item": "goblin_skin", "chance": 0.25 },
-        { "item": "goblin_tooth", "chance": 0.25 },
+        { "item": "goblin_skin", "chance": 0.5 },
         { "item": "wood_sword", "chance": 0.1 }
     ],
     "orc": [
         { "item": "iron_helm", "chance": 0.2 },
-        { "item": "iron_axe", "chance": 0.02 },
-        { "item": "goblin_skin", "chance": 0.1 },
-        { "item": "Orcish_rock", "chance": 0.1 }
+        { "item": "goblin_skin", "chance": 0.1 }
     ],
     "skeleton": [
         { "item": "wood_sword_sharp", "chance": 0.05 }
