@@ -13,7 +13,7 @@ signal combat_ended(victory, summary)
 # Constants
 const BASE_STAMINA_COST = 5
 const AI_ACTION_COST = 30.0
-const INPUT_COOLDOWN = 0.5
+const INPUT_COOLDOWN = 0.112
 const START_COMBAT_DELAY = 2.0
 const ACTION_COOLDOWN = 2.0
 
