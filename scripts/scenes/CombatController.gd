@@ -471,11 +471,13 @@ func _apply_skill_effect(type, user_idx, target_idx):
 		apply_debuff(false, target_idx, "slowed", 5.0)
 	elif type == "heal_self":
 		GameManager.heal_member(user_idx, final_dmg * 5) # Self heal is stronger
+		emit_signal("log_message", GameManager.party[user_idx]["name"] + " heals self!")
 	elif type == "heal_stamina":
 		party_stamina[user_idx] = min(party_stamina[user_idx] + 30, party_max_stamina[user_idx])
 		emit_signal("log_message", GameManager.party[user_idx]["name"] + " recovers Stamina!")
 	elif type == "heal_party":
 		GameManager.heal_party(final_dmg)
+		emit_signal("log_message", GameManager.party[user_idx]["name"] + " heals party!")
 	elif type == "buff_attack":
 		apply_debuff(true, user_idx, "attack_boost", 10.0)
 		GameManager.heal_party(final_dmg)
