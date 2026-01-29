@@ -288,26 +288,27 @@ func _spawn_particle(hero_idx, color, is_explosion):
 
 		var emitter = CPUParticles2D.new()
 		target_node.add_child(emitter)
+		emitter.show_behind_parent = true # Draw behind the sprite
 		emitter.position = Vector2(32, 32) # Center of 64x64 icon
-		emitter.amount = 20
+		emitter.amount = 30
 		emitter.one_shot = true
 		emitter.explosiveness = 1.0
-		emitter.lifetime = 0.5
+		emitter.lifetime = 0.8
 		emitter.direction = Vector2(0, -1)
 		emitter.spread = 180
 		emitter.gravity = Vector2(0, 0)
-		emitter.initial_velocity_min = 50
-		emitter.initial_velocity_max = 100
-		emitter.scale_amount_min = 2.0
-		emitter.scale_amount_max = 4.0
+		emitter.initial_velocity_min = 60
+		emitter.initial_velocity_max = 120
+		emitter.scale_amount_min = 4.0
+		emitter.scale_amount_max = 8.0
 		emitter.color = color
 
 		if is_explosion:
-			emitter.amount = 50
-			emitter.scale_amount_min = 4.0
-			emitter.scale_amount_max = 8.0
-			emitter.initial_velocity_min = 100
-			emitter.initial_velocity_max = 200
+			emitter.amount = 60
+			emitter.scale_amount_min = 6.0
+			emitter.scale_amount_max = 12.0
+			emitter.initial_velocity_min = 120
+			emitter.initial_velocity_max = 250
 
 		emitter.emitting = true
 
