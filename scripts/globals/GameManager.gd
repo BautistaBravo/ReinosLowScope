@@ -221,7 +221,7 @@ func gain_rewards(xp_amount, gold_amount):
 	for i in range(party.size()):
 		var member = party[i]
 		if member["hp"] > 0:
-			member["xp"] += xp_amount / party.size()
+			member["xp"] += xp_amount
 			if _check_level_up(i, member):
 				leveled_up_names.append(member["name"])
 	return leveled_up_names

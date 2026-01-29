@@ -8,12 +8,14 @@ signal party_updated(party_data, party_stamina, party_max_stamina)
 signal enemy_updated(enemies_data, atb_gauges, selected_idx)
 signal combat_frame_update(party_stamina, enemy_atb)
 signal targeting_mode_changed(is_targeting, combo_ready_text)
+signal input_accepted(key, hero_idx)
+signal combo_executed(hero_idx, target_idx)
 signal combat_ended(victory, summary)
 
 # Constants
 const BASE_STAMINA_COST = 5
 const AI_ACTION_COST = 30.0
-const INPUT_COOLDOWN = 0.112
+const INPUT_COOLDOWN = 0.5
 const START_COMBAT_DELAY = 2.0
 const ACTION_COOLDOWN = 2.0
 
@@ -392,6 +394,7 @@ func handle_input(event):
 				var txt = "Input: "
 				for k in input_buffer: txt += k.to_upper() + " "
 				emit_signal("targeting_mode_changed", false, txt)
+				emit_signal("input_accepted", key, controlled_hero_idx)
 
 				_sync_player_stamina()
 				emit_signal("player_stamina_updated", player_stamina, player_max_stamina)
@@ -436,6 +439,7 @@ func _execute_combo():
 	var player = GameManager.party[controlled_hero_idx]
 	var skills = player.get("skills", {})
 
+	emit_signal("combo_executed", controlled_hero_idx, selected_enemy_index)
 	var log_text = player["name"] + " Combo: "
 
 	for key in input_buffer:

@@ -24,6 +24,8 @@ func _ready():
 	controller.enemy_updated.connect(_on_enemy_updated)
 	controller.combat_frame_update.connect(_on_frame_update)
 	controller.targeting_mode_changed.connect(_on_targeting)
+	controller.input_accepted.connect(_on_input_accepted)
+	controller.combo_executed.connect(_on_combo_executed)
 	controller.combat_ended.connect(_on_combat_ended)
 
 	_build_visuals()
@@ -267,6 +269,52 @@ func _on_targeting(is_targeting, text):
 		input_label.modulate = Color.YELLOW
 	else:
 		input_label.modulate = Color.WHITE
+
+func _on_input_accepted(key, hero_idx):
+	var color = Color.WHITE
+	if key == "q": color = Color.RED
+	elif key == "w": color = Color.GREEN
+	elif key == "e": color = Color.BLUE
+
+	_spawn_particle(hero_idx, color, false)
+
+func _on_combo_executed(hero_idx, target_idx):
+	_spawn_particle(hero_idx, Color.YELLOW, true)
+
+func _spawn_particle(hero_idx, color, is_explosion):
+	var party_nodes = party_container.get_children()
+	if hero_idx >= 0 and hero_idx < party_nodes.size():
+		var target_node = party_nodes[hero_idx].get_child(0) # Icon is first child of HBox
+
+		var emitter = CPUParticles2D.new()
+		target_node.add_child(emitter)
+		emitter.position = Vector2(32, 32) # Center of 64x64 icon
+		emitter.amount = 20
+		emitter.one_shot = true
+		emitter.explosiveness = 1.0
+		emitter.lifetime = 0.5
+		emitter.direction = Vector2(0, -1)
+		emitter.spread = 180
+		emitter.gravity = Vector2(0, 0)
+		emitter.initial_velocity_min = 50
+		emitter.initial_velocity_max = 100
+		emitter.scale_amount_min = 2.0
+		emitter.scale_amount_max = 4.0
+		emitter.color = color
+
+		if is_explosion:
+			emitter.amount = 50
+			emitter.scale_amount_min = 4.0
+			emitter.scale_amount_max = 8.0
+			emitter.initial_velocity_min = 100
+			emitter.initial_velocity_max = 200
+
+		emitter.emitting = true
+
+		# Auto-cleanup
+		await get_tree().create_timer(1.0).timeout
+		if is_instance_valid(emitter):
+			emitter.queue_free()
 
 func _on_combat_ended(victory, summary_data = {}):
 	if victory:
